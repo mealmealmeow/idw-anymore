@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>古韻對決：V22 皇家美學版</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <title>古韻對決：V23 完整資料版</title>
     <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+TC:wght@500;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -21,7 +20,6 @@
             
             --panel-bg: rgba(20, 25, 35, 0.7);
             --panel-border: 1px solid rgba(212, 175, 55, 0.3);
-            --shadow-glow: 0 0 20px rgba(212, 175, 55, 0.2);
             
             --font-title: 'Ma Shan Zheng', cursive;
             --font-body: 'Noto Serif TC', serif;
@@ -35,7 +33,7 @@
             user-select: none; -webkit-tap-highlight-color: transparent;
         }
 
-        /* 背景紋理：雲紋 */
+        /* 背景紋理 */
         body::before {
             content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 40a40 40 0 0 1 40-40h40v40a40 40 0 0 1-40 40H0V40zm40 0a40 40 0 0 1 40-40v40H40z' fill='%23d4af37' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
@@ -45,10 +43,9 @@
         #app {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             display: flex; flex-direction: column; z-index: 1;
-            padding-bottom: env(safe-area-inset-bottom);
         }
 
-        /* --- Header: 懸浮宮殿頂 --- */
+        /* --- Header --- */
         header {
             height: 70px; flex-shrink: 0;
             display: flex; justify-content: space-between; align-items: center;
@@ -66,39 +63,32 @@
             padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; color: #aaa;
         }
 
-        /* --- Main Stage: iPad Grid Layout --- */
+        /* --- Game Stage --- */
         #game-stage {
             flex: 1; 
             display: grid; 
-            grid-template-columns: 280px 1fr 280px; /* 左右定寬，中間自適應 */
+            grid-template-columns: 280px 1fr 280px;
             gap: 20px; padding: 20px 40px;
             align-items: center; justify-items: center;
             height: 100%; overflow: hidden;
         }
 
-        /* --- Team Panels: 懸浮碑石風格 --- */
+        /* --- Team Panels --- */
         .team-panel {
             width: 100%; height: 90%; 
             background: var(--panel-bg);
             border: var(--panel-border);
-            border-radius: 100px 100px 20px 20px; /* 拱門形狀 */
+            border-radius: 100px 100px 20px 20px;
             display: flex; flex-direction: column; align-items: center; padding: 30px 20px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.5);
             backdrop-filter: blur(10px);
-            transition: 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            transition: 0.4s;
             position: relative;
         }
         .team-panel.active {
             border-color: var(--gold-primary);
             box-shadow: 0 0 50px rgba(212, 175, 55, 0.15), inset 0 0 20px rgba(212, 175, 55, 0.1);
             transform: translateY(-10px);
-        }
-        /* 激活時的光暈邊框 */
-        .team-panel.active::after {
-            content: ''; position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px;
-            border-radius: 100px 100px 20px 20px;
-            background: linear-gradient(180deg, var(--gold-primary), transparent);
-            z-index: -1; opacity: 0.5;
         }
 
         .avatar-frame {
@@ -113,104 +103,70 @@
         .score-display {
             font-size: 4rem; font-weight: 900; 
             background: linear-gradient(to bottom, #fff, #bbb); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 2px 0 rgba(0,0,0,0.5));
-            line-height: 1; margin: 10px 0;
+            margin: 10px 0;
         }
-        .hearts-container { font-size: 1.5rem; color: #e74c3c; margin-bottom: auto; filter: drop-shadow(0 0 5px rgba(231, 76, 60, 0.6)); }
+        .hearts-container { font-size: 1.5rem; color: #e74c3c; margin-bottom: auto; }
 
         .student-plate {
             width: 100%; text-align: center; padding: 15px 0;
             border-top: 1px solid rgba(255,255,255,0.1); margin-top: auto;
         }
-        .student-name { font-size: 1.8rem; font-weight: bold; color: var(--gold-primary); text-shadow: 0 0 10px rgba(0,0,0,0.8); }
+        .student-name { font-size: 1.8rem; font-weight: bold; color: var(--gold-primary); }
 
-        /* --- Center Card: 聖旨卷軸風格 --- */
+        /* --- Center Card --- */
         .card-stage {
             width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; perspective: 1500px;
         }
         .main-card {
             width: 100%; max-width: 600px; height: 90%; 
-            position: relative; transform-style: preserve-3d; transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative; transform-style: preserve-3d; transition: transform 0.8s;
         }
         .main-card.flipped { transform: rotateY(180deg); }
 
         .card-face {
             position: absolute; width: 100%; height: 100%; backface-visibility: hidden;
             border-radius: 20px; 
-            /* 邊框改為雙層金邊 */
             border: 4px solid #444; outline: 2px solid var(--gold-primary); outline-offset: -10px;
             background: #fdfbf7; 
             display: flex; flex-direction: column; overflow: hidden;
             box-shadow: 0 30px 80px rgba(0,0,0,0.8);
         }
-        /* 正面：宣紙 + 紋理 */
         .front { background-image: url('https://www.transparenttextures.com/patterns/rice-paper-2.png'); }
-        /* 背面：答案 */
         .back { transform: rotateY(180deg); background: #fff; padding: 40px; text-align: left; overflow-y: auto; color: #222; }
 
         .q-visual { height: 40%; background: #111; position: relative; border-bottom: 4px double var(--gold-primary); }
         .q-img { width: 100%; height: 100%; background-size: cover; background-position: center; opacity: 0.9; }
         
         .q-body { flex: 1; padding: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        .q-text { 
-            font-size: 2.5rem; font-weight: bold; color: #1a1a1a; line-height: 1.5; 
-            font-family: var(--font-body);
-        }
+        .q-text { font-size: 2.2rem; font-weight: bold; color: #1a1a1a; line-height: 1.5; font-family: var(--font-body); }
         .q-cat { 
             position: absolute; top: 15px; left: 15px; 
             background: var(--gold-primary); color: #000; padding: 4px 12px; 
-            font-weight: bold; font-size: 0.9rem; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            font-weight: bold; font-size: 0.9rem; border-radius: 4px;
         }
 
-        /* --- Footer & Buttons: 琉璃質感 --- */
+        /* --- Footer & Buttons --- */
         footer {
             height: 100px; padding: 0 40px; 
             background: linear-gradient(to top, rgba(0,0,0,0.95), transparent);
             display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
             z-index: 10;
         }
-        
-        /* 寶石按鈕 */
         .gem-btn {
             position: relative; border: none; outline: none; background: transparent; cursor: pointer;
             padding: 16px 40px; border-radius: 50px;
             font-size: 1.3rem; font-weight: 900; color: #fff;
             background: linear-gradient(180deg, rgba(255,255,255,0.1), rgba(0,0,0,0.2));
-            box-shadow: 
-                0 4px 6px rgba(0,0,0,0.3),
-                inset 0 1px 0 rgba(255,255,255,0.4),
-                inset 0 -4px 0 rgba(0,0,0,0.2);
-            transition: all 0.2s; overflow: hidden;
-            display: flex; align-items: center; gap: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: all 0.2s; overflow: hidden; display: flex; align-items: center; gap: 10px;
         }
-        /* 金色按鈕 */
         .btn-gold { 
-            background-color: #d4af37; 
-            background-image: linear-gradient(160deg, #f1c40f, #b8860b);
+            background-color: #d4af37; background-image: linear-gradient(160deg, #f1c40f, #b8860b);
             border: 2px solid #fff5c3;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
         }
-        /* 綠色按鈕 */
-        .btn-green {
-            background-image: linear-gradient(160deg, #2ecc71, #27ae60);
-            border: 2px solid #a8e6cf;
-        }
-        /* 紅色按鈕 */
-        .btn-red {
-            background-image: linear-gradient(160deg, #e74c3c, #c0392b);
-            border: 2px solid #ffbcb5;
-        }
+        .btn-green { background-image: linear-gradient(160deg, #2ecc71, #27ae60); border: 2px solid #a8e6cf; }
+        .btn-red { background-image: linear-gradient(160deg, #e74c3c, #c0392b); border: 2px solid #ffbcb5; }
         .gem-btn:active { transform: translateY(2px); box-shadow: none; }
-        
-        /* 流光特效 */
-        .gem-btn::after {
-            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-            transform: skewX(-20deg); animation: shine 3s infinite;
-        }
-        @keyframes shine { 0% { left: -100%; } 20% { left: 200%; } 100% { left: 200%; } }
-
         .hidden { display: none !important; }
 
         /* --- Overlays --- */
@@ -220,503 +176,446 @@
             display: none; flex-direction: column; justify-content: center; align-items: center;
             backdrop-filter: blur(20px);
         }
-
-        /* --- 精美卡牌設計 (Tarot Style) --- */
-        .cards-container {
-            display: flex; gap: 40px; perspective: 1200px;
-            width: 100%; justify-content: center; align-items: center;
-        }
-
+        
+        /* Tarot Cards */
+        .cards-container { display: flex; gap: 40px; perspective: 1200px; width: 100%; justify-content: center; align-items: center; }
         .tarot-card {
-            width: 260px; height: 460px; /* 黃金比例 */
-            position: relative; cursor: pointer;
-            transform-style: preserve-3d; 
-            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            width: 260px; height: 460px; position: relative; cursor: pointer;
+            transform-style: preserve-3d; transition: transform 0.6s;
         }
         .tarot-card:hover { transform: translateY(-30px) rotateX(10deg); z-index: 10; }
         .tarot-card.flipped { transform: rotateY(180deg); }
         .tarot-card.disabled { opacity: 0.1; filter: grayscale(100%); pointer-events: none; }
-
         .tarot-face {
             position: absolute; width: 100%; height: 100%; backface-visibility: hidden;
-            border-radius: 15px; overflow: hidden;
-            box-shadow: 0 15px 40px rgba(0,0,0,1);
+            border-radius: 15px; overflow: hidden; box-shadow: 0 15px 40px rgba(0,0,0,1);
         }
-
-        /* 卡背：高級紋理 */
         .tarot-back {
             background-color: #111;
-            /* 幾何圖案 */
-            background-image: 
-                linear-gradient(30deg, #000 12%, transparent 12.5%, transparent 87%, #000 87.5%, #000),
-                linear-gradient(150deg, #000 12%, transparent 12.5%, transparent 87%, #000 87.5%, #000),
-                linear-gradient(30deg, #000 12%, transparent 12.5%, transparent 87%, #000 87.5%, #000),
-                linear-gradient(150deg, #000 12%, transparent 12.5%, transparent 87%, #000 87.5%, #000),
-                linear-gradient(60deg, rgba(212, 175, 55, 0.1) 25%, transparent 25.5%, transparent 75%, rgba(212, 175, 55, 0.1) 75%, rgba(212, 175, 55, 0.1)),
-                linear-gradient(60deg, rgba(212, 175, 55, 0.1) 25%, transparent 25.5%, transparent 75%, rgba(212, 175, 55, 0.1) 75%, rgba(212, 175, 55, 0.1));
+            background-image: linear-gradient(30deg, #000 12%, transparent 12.5%, transparent 87%, #000 87.5%, #000);
             background-size: 40px 70px;
-            background-position: 0 0, 0 0, 20px 35px, 20px 35px, 0 0, 20px 35px;
-            border: 4px solid var(--gold-primary);
-            display: flex; justify-content: center; align-items: center;
+            border: 4px solid var(--gold-primary); display: flex; justify-content: center; align-items: center;
         }
-        
-        /* 中間的徽章 */
         .tarot-emblem {
             width: 120px; height: 120px; border: 2px solid var(--gold-primary);
             border-radius: 50%; display: flex; justify-content: center; align-items: center;
-            background: #000; box-shadow: 0 0 20px var(--gold-primary);
-            font-size: 3rem;
+            background: #000; box-shadow: 0 0 20px var(--gold-primary); font-size: 3rem;
         }
-
-        .style-chance .tarot-back { border-color: var(--gold-primary); }
-        .style-chance .tarot-emblem { color: var(--gold-primary); text-shadow: 0 0 10px var(--gold-primary); }
-        
-        .style-punish .tarot-back { border-color: var(--red-royal); background-image: none; background: #2b0505; }
+        .style-punish .tarot-back { border-color: var(--red-royal); background: #2b0505; }
         .style-punish .tarot-emblem { border-color: var(--red-royal); color: var(--red-royal); box-shadow: 0 0 20px var(--red-royal); }
-
-        /* 卡面：內容 */
         .tarot-front {
-            background: #fffbf0; transform: rotateY(180deg);
-            padding: 20px; text-align: center;
-            display: flex; flex-direction: column; align-items: center;
-            border: 8px solid var(--gold-primary);
+            background: #fffbf0; transform: rotateY(180deg); padding: 20px; text-align: center;
+            display: flex; flex-direction: column; align-items: center; border: 8px solid var(--gold-primary);
         }
-        .tf-type { font-size: 0.9rem; letter-spacing: 2px; text-transform: uppercase; color: #888; margin-bottom: 10px; }
         .tf-title { 
             font-family: var(--font-title); font-size: 2.5rem; line-height: 1.2; 
             color: #000; margin-bottom: 15px; border-bottom: 2px solid #ccc; padding-bottom: 10px; width: 100%;
         }
-        .tf-desc { font-size: 1.2rem; color: #444; font-weight: bold; flex: 1; display: flex; align-items: center; line-height: 1.5; }
-        .tf-val { 
-            background: #eee; padding: 5px 20px; border-radius: 20px; font-weight: bold; color: #333; margin-top: auto;
-        }
+        .tf-desc { font-size: 1.2rem; color: #444; font-weight: bold; flex: 1; display: flex; align-items: center; justify-content: center; }
 
-        /* --- Settings & Roster --- */
-        .settings-modal {
-            background: #1a1a1a; width: 600px; padding: 40px; border-radius: 20px;
-            border: 1px solid #444; color: #fff; text-align: left;
-            box-shadow: 0 20px 60px #000;
-        }
-        textarea { width: 100%; height: 150px; background: #000; border: 1px solid #444; color: #fff; padding: 10px; margin-bottom: 20px; }
-
-        /* --- Mobile / Vertical Fallback --- */
-        @media (max-width: 900px) {
-            #game-stage { display: flex; flex-direction: column; overflow-y: auto; height: auto; }
-            .team-panel { width: 100%; height: auto; border-radius: 20px; flex-direction: row; justify-content: space-between; padding: 15px; }
-            .main-card { height: 400px; }
-            .cards-container { flex-direction: column; width: 100%; }
-            .tarot-card { width: 80%; height: 200px; }
-            .tarot-face { flex-direction: row; padding: 20px; text-align: left; }
+        @media (max-width: 1024px) {
+            #game-stage { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
             footer { grid-template-columns: 1fr; height: auto; gap: 15px; padding: 20px; }
             .gem-btn { width: 100%; justify-content: center; }
-            .avatar-frame { width: 60px; height: 60px; margin: 0 15px 0 0; }
         }
-
     </style>
 </head>
 <body>
-
-<div id="app">
-    <header>
-        <div class="info-pill">題庫數: <span id="q-count">0</span></div>
-        <div class="app-title">古韻對決</div>
-        <button class="gem-btn" style="padding:10px 15px; font-size:1.2rem;" onclick="openSettings()">⚙️</button>
-    </header>
-
-    <div id="game-stage">
-        <!-- Left Panel -->
-        <div class="team-panel team-a active" id="panel-a">
-            <div class="avatar-frame">
-                <div class="avatar" style="background-image: url('https://images.unsplash.com/photo-1542596768-5d1d21f1cfb6?w=400')"></div>
+    <div id="app">
+        <header>
+            <div class="info-pill">題庫數: <span id="q-count">0</span></div>
+            <div class="app-title">古韻對決</div>
+            <button class="gem-btn" style="padding:10px 15px; font-size:1.2rem;" onclick="openSettings()">⚙️</button>
+        </header>
+        
+        <div id="game-stage">
+            <div class="team-panel team-a active" id="panel-a">
+                <div class="avatar-frame"><div class="avatar" style="background-image: url('https://images.unsplash.com/photo-1542596768-5d1d21f1cfb6?w=400')"></div></div>
+                <div class="team-title" style="color:#ff7675;">豪放派</div>
+                <div class="score-display" id="score-a">100</div>
+                <div class="hearts-container" id="hearts-a">❤️❤️❤️</div>
+                <div class="student-plate">
+                    <div style="font-size:0.8rem; color:#aaa; margin-bottom:5px;">先鋒戰將</div>
+                    <div class="student-name" id="student-name-a">準備</div>
+                </div>
+                <div style="margin-top:10px; display:grid; grid-template-columns:1fr 1fr; gap:5px; width:100%; opacity:0.3; transition:0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.3">
+                    <button onclick="modStat('a','s',10)" style="background:#444; border:none; color:#fff; cursor:pointer;">+10</button>
+                    <button onclick="modStat('a','s',-10)" style="background:#444; border:none; color:#fff; cursor:pointer;">-10</button>
+                    <button onclick="modStat('a','h',1)" style="background:#444; border:none; color:#fff; cursor:pointer;">+❤</button>
+                    <button onclick="modStat('a','h',-1)" style="background:#444; border:none; color:#fff; cursor:pointer;">-❤</button>
+                </div>
             </div>
-            <div class="team-title" style="color:#ff7675;">豪放派</div>
-            <div class="score-display" id="score-a">100</div>
-            <div class="hearts-container" id="hearts-a">❤️❤️❤️</div>
-            <div class="student-plate">
-                <div style="font-size:0.8rem; color:#aaa; margin-bottom:5px;">先鋒戰將</div>
-                <div class="student-name" id="student-name-a">準備</div>
-            </div>
-            <!-- Admin Controls -->
-            <div style="margin-top:10px; display:grid; grid-template-columns:1fr 1fr; gap:5px; width:100%; opacity:0.3; transition:0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.3">
-                <button onclick="modStat('a','s',10)" style="background:#444; border:none; color:#fff; cursor:pointer;">+10</button>
-                <button onclick="modStat('a','s',-10)" style="background:#444; border:none; color:#fff; cursor:pointer;">-10</button>
-                <button onclick="modStat('a','h',1)" style="background:#444; border:none; color:#fff; cursor:pointer;">+❤</button>
-                <button onclick="modStat('a','h',-1)" style="background:#444; border:none; color:#fff; cursor:pointer;">-❤</button>
-            </div>
-        </div>
 
-        <!-- Center Stage -->
-        <div class="card-stage">
-            <div class="main-card" id="game-card" onclick="flipCard()">
-                <div class="card-face front">
-                    <div class="q-visual" id="card-img"></div>
-                    <div class="q-body">
-                        <div class="q-cat" id="q-cat">準備</div>
-                        <div class="q-text" id="q-text">點擊下方「抽取試煉」<br>開始對決</div>
-                        <div style="margin-top:auto; font-size:0.9rem; color:#999;">(點擊卡片翻閱答案)</div>
+            <div class="card-stage">
+                <div class="main-card" id="game-card" onclick="flipCard()">
+                    <div class="card-face front">
+                        <div class="q-visual" id="card-img"><div class="q-img" style="background-image: url('https://images.unsplash.com/photo-1516541196182-6bdb0516ed27?w=800')"></div></div>
+                        <div class="q-body">
+                            <div class="q-cat" id="q-cat">準備</div>
+                            <div class="q-text" id="q-text">點擊下方「抽取試煉」<br>開始對決</div>
+                            <div style="margin-top:auto; font-size:0.9rem; color:#999;">(點擊卡片翻閱答案)</div>
+                        </div>
+                    </div>
+                    <div class="card-face back">
+                        <div style="font-size:1.5rem; color:#c0392b; border-bottom:2px solid #ccc; margin-bottom:15px; font-weight:bold;">答案解析</div>
+                        <div id="q-ans" style="font-size:1.4rem; line-height:1.6;"></div>
                     </div>
                 </div>
-                <div class="card-face back">
-                    <div style="font-size:1.5rem; color:#c0392b; border-bottom:2px solid #ccc; margin-bottom:15px; font-weight:bold;">參考詳解</div>
-                    <div style="font-size:1.5rem; line-height:1.6; font-weight:500;" id="q-ans"></div>
+            </div>
+
+            <div class="team-panel team-b" id="panel-b">
+                <div class="avatar-frame"><div class="avatar" style="background-image: url('https://images.unsplash.com/photo-1549488497-2900e643cc21?w=400')"></div></div>
+                <div class="team-title" style="color:#74b9ff;">婉約派</div>
+                <div class="score-display" id="score-b">100</div>
+                <div class="hearts-container" id="hearts-b">❤️❤️❤️</div>
+                <div class="student-plate">
+                    <div style="font-size:0.8rem; color:#aaa; margin-bottom:5px;">先鋒戰將</div>
+                    <div class="student-name" id="student-name-b">準備</div>
+                </div>
+                <div style="margin-top:10px; display:grid; grid-template-columns:1fr 1fr; gap:5px; width:100%; opacity:0.3; transition:0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.3">
+                    <button onclick="modStat('b','s',10)" style="background:#444; border:none; color:#fff; cursor:pointer;">+10</button>
+                    <button onclick="modStat('b','s',-10)" style="background:#444; border:none; color:#fff; cursor:pointer;">-10</button>
+                    <button onclick="modStat('b','h',1)" style="background:#444; border:none; color:#fff; cursor:pointer;">+❤</button>
+                    <button onclick="modStat('b','h',-1)" style="background:#444; border:none; color:#fff; cursor:pointer;">-❤</button>
                 </div>
             </div>
         </div>
 
-        <!-- Right Panel -->
-        <div class="team-panel team-b" id="panel-b">
-            <div class="avatar-frame">
-                <div class="avatar" style="background-image: url('https://images.unsplash.com/photo-1517849845537-4d257902454a?w=400')"></div>
+        <footer>
+            <div style="display:flex; gap:20px;">
+                <button class="gem-btn" onclick="initSelection('chance')">✨ 錦囊 (機會)</button>
             </div>
-            <div class="team-title" style="color:#74b9ff;">婉約派</div>
-            <div class="score-display" id="score-b">100</div>
-            <div class="hearts-container" id="hearts-b">❤️❤️❤️</div>
-            <div class="student-plate">
-                <div style="font-size:0.8rem; color:#aaa; margin-bottom:5px;">先鋒戰將</div>
-                <div class="student-name" id="student-name-b">準備</div>
-            </div>
-            <!-- Admin Controls -->
-            <div style="margin-top:10px; display:grid; grid-template-columns:1fr 1fr; gap:5px; width:100%; opacity:0.3; transition:0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.3">
-                <button onclick="modStat('b','s',10)" style="background:#444; border:none; color:#fff; cursor:pointer;">+10</button>
-                <button onclick="modStat('b','s',-10)" style="background:#444; border:none; color:#fff; cursor:pointer;">-10</button>
-                <button onclick="modStat('b','h',1)" style="background:#444; border:none; color:#fff; cursor:pointer;">+❤</button>
-                <button onclick="modStat('b','h',-1)" style="background:#444; border:none; color:#fff; cursor:pointer;">-❤</button>
-            </div>
-        </div>
-    </div>
-
-    <footer>
-        <div style="justify-self: start;">
-            <button class="gem-btn btn-red" onclick="showWheel()">💀 終極懲罰</button>
-        </div>
-        <div style="justify-self: center; display:flex; gap:20px;">
-            <button class="gem-btn btn-gold" id="btn-draw" onclick="drawQuestion()">🔮 抽取試煉</button>
-            <div id="action-btns" class="hidden" style="display:flex; gap:20px;">
-                <button class="gem-btn btn-green" onclick="initSelection('chance')">⭕ 答對 (賞)</button>
-                <button class="gem-btn btn-red" onclick="initSelection('punish')">❌ 答錯 (罰)</button>
-            </div>
-        </div>
-        <div style="justify-self: end;"></div>
-    </footer>
-</div>
-
-<!-- 3-Card Selection Overlay (The Tarot Cards) -->
-<div class="overlay" id="overlay-select">
-    <h1 id="select-title" style="font-family:var(--font-title); font-size:4rem; color:var(--gold-primary); text-shadow:0 0 20px #000; margin-bottom:50px;">命運抉擇</h1>
-    <div class="cards-container" id="cards-grid">
-        <!-- JS will inject cards here -->
-    </div>
-    <button class="gem-btn btn-gold hidden" id="btn-confirm-select" style="margin-top:60px; transform:scale(1.2);" onclick="closeSelection()">確認結果</button>
-</div>
-
-<!-- Settings Overlay -->
-<div class="overlay" id="overlay-settings">
-    <div class="settings-modal">
-        <h2 style="color:var(--gold-primary); margin-bottom:20px;">後台管理</h2>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-            <div>
-                <h4>豪放派名單</h4>
-                <textarea id="input-roster-a" placeholder="一行一個名字"></textarea>
-            </div>
-            <div>
-                <h4>婉約派名單</h4>
-                <textarea id="input-roster-b" placeholder="一行一個名字"></textarea>
-            </div>
-        </div>
-        <div style="display:flex; gap:10px; margin-top:20px;">
-            <button class="gem-btn" style="flex:1; font-size:1rem;" onclick="saveRoster()">💾 儲存</button>
-            <button class="gem-btn" style="flex:1; font-size:1rem;" onclick="exportExcel()">📥 備份數據</button>
-            <button class="gem-btn" style="flex:1; font-size:1rem; position:relative;">
-                📤 上傳數據
-                <input type="file" onchange="importExcel(this)" style="position:absolute; left:0; top:0; width:100%; height:100%; opacity:0; cursor:pointer;">
-            </button>
-            <button class="gem-btn btn-red" style="flex:1; font-size:1rem;" onclick="document.getElementById('overlay-settings').style.display='none'">關閉</button>
-        </div>
-    </div>
-</div>
-
-<!-- Wheel Overlay -->
-<div class="overlay" id="overlay-wheel">
-    <h1 style="font-family:var(--font-title); color:var(--gold-primary); font-size:4rem; text-shadow:0 0 20px black;">終極輪盤</h1>
-    <div style="width:500px; height:500px; position:relative; margin:30px;">
-        <div style="position:absolute; top:-30px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:25px solid transparent; border-right:25px solid transparent; border-top:50px solid #fff; z-index:10; filter:drop-shadow(0 5px 5px rgba(0,0,0,0.5));"></div>
-        <canvas id="wheel-canvas" width="500" height="500" style="width:100%; height:100%; border-radius:50%; border:10px solid var(--gold-primary); box-shadow:0 0 60px rgba(0,0,0,0.8); transition:transform 5s cubic-bezier(0.1,0,0.1,1);"></canvas>
-    </div>
-    <button class="gem-btn btn-gold" id="btn-spin" onclick="spinWheel()">🚀 啟動</button>
-    <button class="gem-btn hidden" id="btn-close-wheel" style="margin-top:20px;" onclick="document.getElementById('overlay-wheel').style.display='none'">關閉</button>
-</div>
-
-<!-- Popup -->
-<div class="overlay" id="overlay-popup">
-    <div style="background:#fff; width:500px; padding:40px; border-radius:30px; text-align:center; border:6px solid var(--gold-primary); color:#000;">
-        <div style="font-size:6rem;">⚠️</div>
-        <h2 id="popup-title" style="color:#c0392b; font-size:3rem; margin:10px 0;">標題</h2>
-        <p id="popup-desc" style="font-size:1.8rem; font-weight:bold; margin:20px 0;">內容</p>
-        <button class="gem-btn btn-red" onclick="document.getElementById('overlay-popup').style.display='none'">關閉</button>
-    </div>
-</div>
-
-<script>
-    // --- FULL DATABASE ---
-    let db = {
-        questions: [
-            { cat: "蘇軾《念奴嬌》", q: "「大江東去，浪淘盡、千古風流人物」一句，奠定了全詞怎樣的感情基調？", a: "奠定了【悲涼雄壯】的基調。感慨時光流逝，歷史上的英雄人物都隨時間消逝，引出後文對歷史興衰的感嘆。", img: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600" },
-            { cat: "蘇軾《念奴嬌》", q: "詞中「亂石穿空，驚濤拍岸，捲起千堆雪」運用了哪些修辭手法？", a: "1. 【誇張】（穿空、千堆雪）<br>2. 【擬人】（驚濤拍岸）<br>3. 【借喻】（以「雪」喻浪花）。", img: "https://images.unsplash.com/photo-1505673542670-a5e3ff5b14a3?w=600" }
-        ],
-        ops: [
-            { title: "羽扇綸巾", desc: "【談笑間】指定敵方一名「主將」禁言一回合。", val: 0 },
-            { title: "大江東去", desc: "氣勢如虹！直接扣除敵方 20 分。", val: 20 },
-            { title: "東風夜放", desc: "花千樹，星如雨。本題得分雙倍 (加 20 分)。", val: 20 },
-            { title: "心凝形釋", desc: "與萬化冥合，抵銷下一次受到的任何懲罰。", val: 0 }
-        ],
-        puns: [
-            { title: "早生華髮", desc: "多情應笑我。全隊被嘲笑，本題倒扣 10 分。", val: 10 },
-            { title: "借酒澆愁", desc: "三杯兩盞淡酒。頭昏腦脹，下回合答題時間減半。", val: 0 },
-            { title: "燈火闌珊", desc: "隊友失蹤了？下回合隊長必須「孤獨作答」。", val: 0 },
-            { title: "憔悴損", desc: "人比黃花瘦。全隊體力不支，下回合必須全體「趴在桌上」作答。", val: 0 }
-        ],
-        wheel: [ "矇眼摸人 (10秒)", "人體海浪+配音", "模仿柳宗元坐姿", "姨母笑定格30秒", "深情朗誦", "人體轎子", "連環嘆氣", "Chok樣定格", "哭腔 Rap" ],
-        roster: { a: ["李白", "杜甫", "王維"], b: ["蘇軾", "歐陽修", "王安石"] }
-    };
-
-    let state = { hearts: {a:3, b:3}, scores: {a:100, b:100}, turn: 'a', curQ: null };
-    let wheelDeg = 0;
-
-    // --- Core Logic ---
-    function init() { 
-        updateUI(); initWheel(); 
-        document.getElementById('input-roster-a').value = db.roster.a.join('\n');
-        document.getElementById('input-roster-b').value = db.roster.b.join('\n');
-    }
-
-    function updateUI() {
-        document.getElementById('q-count').innerText = db.questions.length;
-        const t = state.turn;
-        const a = document.getElementById('panel-a'), b = document.getElementById('panel-b');
-        
-        if (t === 'a') { a.classList.add('active'); b.classList.remove('active'); }
-        else { b.classList.add('active'); a.classList.remove('active'); }
-        
-        ['a','b'].forEach(team => {
-            document.getElementById(`score-${team}`).innerText = state.scores[team];
-            let h = "";
-            for(let i=0; i<state.hearts[team]; i++) h += "❤️";
-            if(state.hearts[team]<=0) h = "💔";
-            document.getElementById(`hearts-${team}`).innerText = h;
-        });
-    }
-
-    function modStat(team, type, val) {
-        if (type === 'h') state.hearts[team] = Math.max(0, state.hearts[team] + val);
-        else state.scores[team] += val;
-        updateUI();
-    }
-
-    function drawQuestion() {
-        if (db.questions.length === 0) return alert("題庫已空！");
-        const idx = Math.floor(Math.random() * db.questions.length);
-        state.curQ = db.questions[idx];
-        db.questions.splice(idx, 1);
-
-        const r = db.roster[state.turn];
-        const s = (r && r.length) ? r[Math.floor(Math.random() * r.length)] : "全體隊員";
-        document.getElementById(`student-name-${state.turn}`).innerText = s;
-        document.getElementById(`student-name-${state.turn==='a'?'b':'a'}`).innerText = "---";
-
-        document.getElementById('game-card').classList.remove('flipped');
-        document.getElementById('q-cat').innerText = state.curQ.cat;
-        document.getElementById('q-text').innerText = state.curQ.q;
-        document.getElementById('q-ans').innerHTML = state.curQ.a;
-        
-        const img = document.getElementById('card-img');
-        if(state.curQ.img && state.curQ.img.startsWith('http')) {
-            img.style.backgroundImage = `url('${state.curQ.img}')`;
-        } else {
-            img.style.backgroundImage = `none`;
-        }
-
-        document.getElementById('btn-draw').classList.add('hidden');
-        document.getElementById('action-btns').classList.remove('hidden');
-        updateUI();
-    }
-
-    function flipCard() { document.getElementById('game-card').classList.toggle('flipped'); }
-
-    // --- High-End Card Selection ---
-    function initSelection(type) {
-        const t = state.turn;
-        if(type === 'chance') { modStat(t,'s',10); modStat(t,'h',1); }
-        else { modStat(t,'s',-10); modStat(t,'h',-1); }
-
-        const pool = type === 'chance' ? db.ops : db.puns;
-        const shuffled = [...pool].sort(() => 0.5 - Math.random());
-        const selected3 = shuffled.slice(0, 3);
-        while(selected3.length < 3) selected3.push({title:"空缺", desc:"...", val:0});
-
-        const grid = document.getElementById('cards-grid');
-        grid.innerHTML = '';
-        
-        const overlayClass = type === 'chance' ? 'style-chance' : 'style-punish';
-        document.getElementById('overlay-select').className = `overlay ${overlayClass}`;
-        
-        document.getElementById('select-title').innerText = type === 'chance' ? "✨ 命運恩賜 ✨" : "⚡ 厄運降臨 ⚡";
-        document.getElementById('select-title').style.color = type === 'chance' ? "#d4af37" : "#c0392b";
-
-        selected3.forEach(item => {
-            const card = document.createElement('div');
-            card.className = 'tarot-card';
-            card.onclick = () => pickCard(card, item, type);
-            // 高級卡面結構
-            card.innerHTML = `
-                <div class="tarot-face tarot-back">
-                    <div class="tarot-emblem">${type==='chance'?'⚜️':'💀'}</div>
-                </div>
-                <div class="tarot-face tarot-front">
-                    <div class="tf-type">${type==='chance'?'Chance Card':'Punishment'}</div>
-                    <div class="tf-title">${item.title}</div>
-                    <div class="tf-desc">${item.desc}</div>
-                    ${item.val !== 0 ? `<div class="tf-val">${item.val > 0 ? '+' : ''}${item.val} 分</div>` : ''}
-                </div>
-            `;
-            grid.appendChild(card);
-        });
-
-        document.getElementById('btn-confirm-select').classList.add('hidden');
-        document.getElementById('overlay-select').style.display = 'flex';
-    }
-
-    function pickCard(cardEl, item, type) {
-        if(cardEl.classList.contains('flipped') || document.querySelector('.tarot-card.flipped')) return;
-        cardEl.classList.add('flipped');
-        
-        document.querySelectorAll('.tarot-card').forEach(c => {
-            if(c !== cardEl) c.classList.add('disabled');
-        });
-
-        const cur = state.turn;
-        const opp = cur === 'a' ? 'b' : 'a';
-
-        if(item.val !== 0) {
-            if(item.desc.includes("扣除敵方") || item.desc.includes("扣")) {
-                if(type === 'chance' && item.desc.includes("敵")) modStat(opp, 's', -item.val);
-                else modStat(cur, 's', -item.val);
-            } else {
-                modStat(cur, 's', type==='chance' ? item.val : -item.val);
-            }
-        }
-
-        setTimeout(() => { document.getElementById('btn-confirm-select').classList.remove('hidden'); }, 600);
-    }
-
-    function closeSelection() {
-        document.getElementById('overlay-select').style.display = 'none';
-        state.turn = state.turn === 'a' ? 'b' : 'a';
-        document.getElementById('btn-draw').classList.remove('hidden');
-        document.getElementById('action-btns').classList.add('hidden');
-        document.getElementById('game-card').classList.remove('flipped');
-        updateUI();
-    }
-
-    // --- Wheel Logic ---
-    function showWheel() { 
-        document.getElementById('overlay-wheel').style.display='flex'; 
-        initWheel(); 
-        document.getElementById('btn-spin').disabled = false;
-        document.getElementById('btn-close-wheel').classList.add('hidden');
-    }
-    
-    function initWheel() {
-        const cvs = document.getElementById('wheel-canvas');
-        const ctx = cvs.getContext('2d');
-        const w=500, h=500, cx=250, cy=250, r=240;
-        const len = db.wheel.length;
-        const arc = Math.PI*2/len;
-        const colors = ['#1a1a1a', '#222'];
-
-        ctx.clearRect(0,0,w,h);
-        for(let i=0; i<len; i++) {
-            const ang = i*arc;
-            ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,ang,ang+arc);
-            ctx.fillStyle = colors[i%2]; ctx.fill(); 
-            ctx.lineWidth = 2; ctx.strokeStyle = "#d4af37"; ctx.stroke();
             
-            ctx.save(); ctx.translate(cx,cy); ctx.rotate(ang + arc/2);
-            ctx.textAlign="right"; ctx.fillStyle="#d4af37"; ctx.font="bold 20px sans-serif";
-            let t = db.wheel[i];
-            let m = t.match(/【(.*?)】/);
-            t = m ? m[1] : (t.length>8 ? t.substring(0,8)+"..." : t);
-            ctx.fillText(t, r-30, 6); ctx.restore();
-        }
-    }
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <button class="gem-btn btn-gold" id="btn-draw" onclick="drawQuestion()" style="transform:scale(1.2);">📜 抽取試煉</button>
+                <div id="action-btns" class="hidden" style="display:flex; gap:20px;">
+                    <button class="gem-btn btn-green" onclick="modStat(state.turn,'s',10); closeQuestion();">✅ 答對 (+10)</button>
+                    <button class="gem-btn btn-red" onclick="initSelection('punish')">❌ 答錯 (抽懲罰卡)</button>
+                </div>
+            </div>
 
-    function spinWheel() {
-        const canvas = document.getElementById('wheel-canvas');
-        document.getElementById('btn-spin').disabled=true;
-        const len = db.wheel.length;
-        const idx = Math.floor(Math.random() * len);
-        const deg = 360/len;
-        const target = 360*5 + (270 - (idx*deg + deg/2));
-        wheelDeg += target;
-        canvas.style.transform = `rotate(${wheelDeg}deg)`;
-        
-        setTimeout(() => {
-            document.getElementById('btn-close-wheel').classList.remove('hidden');
-            const txt = db.wheel[idx];
-            const m = txt.match(/【(.*?)】(.*)/);
-            document.getElementById('popup-title').innerText = m ? m[1] : "懲罰";
-            document.getElementById('popup-desc').innerText = m ? m[2] : txt;
-            document.getElementById('overlay-popup').style.display='flex';
-        }, 5000);
-    }
+            <div style="display:flex; justify-content:flex-end;">
+                <button class="gem-btn btn-red" style="border:2px dashed #ff5e57;" onclick="showWheel()">🎡 終極懲罰 (老師專用)</button>
+            </div>
+        </footer>
+    </div>
 
-    // --- Settings & Excel ---
-    function openSettings() { document.getElementById('overlay-settings').style.display='flex'; }
-    function saveRoster() {
-        db.roster.a = document.getElementById('input-roster-a').value.split('\n').map(s=>s.trim()).filter(s=>s);
-        db.roster.b = document.getElementById('input-roster-b').value.split('\n').map(s=>s.trim()).filter(s=>s);
-        alert("名單已儲存！");
-    }
+    <div class="overlay" id="overlay-select">
+        <h1 id="select-title" style="font-family:var(--font-title); color:var(--gold-primary); font-size:4rem; margin-bottom:40px;">命運抉擇</h1>
+        <div class="cards-container" id="cards-grid"></div>
+        <button class="gem-btn hidden" id="btn-confirm-select" style="margin-top:50px;" onclick="closeSelection()">確認 (下一位)</button>
+    </div>
 
-    function exportExcel() {
-        const wb = XLSX.utils.book_new();
-        const qData = db.questions.map(i=>({分類:i.cat, 題目:i.q, 答案:i.a, 圖片:i.img}));
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(qData), "題目");
-        const oData = db.ops.map(i=>({標題:i.title, 描述:i.desc, 數值:i.val}));
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(oData), "機會");
-        const pData = db.puns.map(i=>({標題:i.title, 描述:i.desc, 數值:i.val}));
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(pData), "懲罰");
-        const wData = db.wheel.map(i=>({內容:i}));
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(wData), "輪盤");
-        const rData = [];
-        const max = Math.max(db.roster.a.length, db.roster.b.length);
-        for(let i=0; i<max; i++) rData.push({TeamA: db.roster.a[i] || "", TeamB: db.roster.b[i] || ""});
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rData), "名單");
-        XLSX.writeFile(wb, "古韻對決_完整資料庫.xlsx");
-    }
+    <div class="overlay" id="overlay-settings">
+        <div style="background:#fff; color:#000; padding:40px; border-radius:20px; width:800px; max-height:80vh; overflow-y:auto;">
+            <h2 style="font-family:var(--font-title); color:#2c3e50;">⚙️ 遊戲名單設定</h2>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+                <div>
+                    <h4>豪放派名單 (一行一個)</h4>
+                    <textarea id="input-roster-a" style="width:100%; height:200px;"></textarea>
+                </div>
+                <div>
+                    <h4>婉約派名單 (一行一個)</h4>
+                    <textarea id="input-roster-b" style="width:100%; height:200px;"></textarea>
+                </div>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="gem-btn" style="flex:1; font-size:1rem;" onclick="saveRoster()">💾 更新名單</button>
+                <button class="gem-btn btn-red" style="flex:1; font-size:1rem;" onclick="document.getElementById('overlay-settings').style.display='none'">關閉</button>
+            </div>
+        </div>
+    </div>
 
-    function importExcel(inp) {
-        const f = inp.files[0]; if(!f)return;
-        const r = new FileReader();
-        r.onload = e => {
-            const data = new Uint8Array(e.target.result);
-            const wb = XLSX.read(data, {type:'array'});
-            if(wb.Sheets["題目"]) db.questions = XLSX.utils.sheet_to_json(wb.Sheets["題目"]).map(r=>({cat:r.分類, q:r.題目, a:r.答案, img:r.圖片}));
-            if(wb.Sheets["機會"]) db.ops = XLSX.utils.sheet_to_json(wb.Sheets["機會"]).map(r=>({title:r.標題, desc:r.描述, val:parseInt(r.數值)||0}));
-            if(wb.Sheets["懲罰"]) db.puns = XLSX.utils.sheet_to_json(wb.Sheets["懲罰"]).map(r=>({title:r.標題, desc:r.描述, val:parseInt(r.數值)||0}));
-            if(wb.Sheets["輪盤"]) db.wheel = XLSX.utils.sheet_to_json(wb.Sheets["輪盤"]).map(r=>r.內容||r.懲罰內容||Object.values(r)[0]);
-            if(wb.Sheets["名單"]) {
-                const raw = XLSX.utils.sheet_to_json(wb.Sheets["名單"]);
-                db.roster.a = []; db.roster.b = [];
-                raw.forEach(row => { if(row.TeamA) db.roster.a.push(row.TeamA); if(row.TeamB) db.roster.b.push(row.TeamB); });
-                document.getElementById('input-roster-a').value = db.roster.a.join('\n');
-                document.getElementById('input-roster-b').value = db.roster.b.join('\n');
+    <div class="overlay" id="overlay-wheel">
+        <h1 style="font-family:var(--font-title); color:var(--gold-primary); font-size:4rem; text-shadow:0 0 20px black;">終極輪盤</h1>
+        <div style="width:500px; height:500px; position:relative; margin:30px;">
+            <div style="position:absolute; top:-30px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:25px solid transparent; border-right:25px solid transparent; border-top:50px solid #fff; z-index:10; filter:drop-shadow(0 5px 5px rgba(0,0,0,0.5));"></div>
+            <canvas id="wheel-canvas" width="500" height="500" style="width:100%; height:100%; border-radius:50%; border:10px solid var(--gold-primary); box-shadow:0 0 60px rgba(0,0,0,0.8); transition:transform 5s cubic-bezier(0.1,0,0.1,1);"></canvas>
+        </div>
+        <button class="gem-btn btn-gold" id="btn-spin" onclick="spinWheel()">🚀 啟動</button>
+        <button class="gem-btn hidden" id="btn-close-wheel" style="margin-top:20px;" onclick="document.getElementById('overlay-wheel').style.display='none'">關閉</button>
+    </div>
+
+    <script>
+        // --- 1. 資料庫 (已填入 Excel 內容) ---
+        let db = {
+            questions: [
+                {cat:"蘇軾《念奴嬌》", q:"「大江東去，浪淘盡、千古風流人物」一句，奠定了全詞怎樣的感情基調？", a:"奠定了【悲涼雄壯】的基調。感慨時光流逝，歷史上的英雄人物都隨時間消逝，引出後文對歷史興衰的感嘆。", img:"https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600"},
+                {cat:"蘇軾《念奴嬌》", q:"詞中「亂石穿空，驚濤拍岸，捲起千堆雪」運用了哪些修辭手法？", a:"1. 【誇張】（穿空、千堆雪）<br>2. 【擬人】（驚濤拍岸）<br>3. 【借喻】（以「雪」喻浪花）。", img:"https://images.unsplash.com/photo-1505673542670-a5e3ff5b14a3?w=600"},
+                {cat:"蘇軾《念奴嬌》", q:"作者為何要在詞中刻畫周瑜「雄姿英發，羽扇綸巾」的形象？", a:"運用了【襯托】手法。以周瑜年少得志、立下赫赫戰功，反襯自己年華老去卻壯志未酬（早生華髮）的無奈。", img:""},
+                {cat:"蘇軾《念奴嬌》", q:"「小喬初嫁了」這一細節的描寫有何作用？", a:"以美人襯托英雄。暗示周瑜當時年輕有為，愛情事業兩得意，更顯其風流瀟灑。", img:""},
+                {cat:"李清照《聲聲慢》", q:"「滿地黃花堆積，憔悴損，如今有誰堪摘」運用了甚麼修辭？比喻甚麼？", a:"運用了【象徵】（或借物自況）。以黃花昔日盛開如今枯萎堆積，象徵自己昔日容顏美好，如今【年老色衰、孤苦無依】的境況。", img:""},
+                {cat:"李清照《聲聲慢》", q:"「守著窗兒，獨自怎生得黑」表達了作者怎樣的感受？", a:"表達了【度日如年】的孤獨感。孤身一人，時間過得極慢，難以熬到天黑。", img:""},
+                {cat:"李清照《聲聲慢》", q:"全詞結尾「這次第，怎一個愁字了得」在佈局上有何特色？", a:"【卒章顯志】。總結全詞，說明這種亡國之恨、喪夫之痛、流離之苦交織，已超越了一般意義上的「愁」。", img:""},
+                {cat:"李清照《聲聲慢》", q:"「這次第，怎一個愁字了得」中的「這次第」具體是指甚麼？", a:"指【光景/情況】。概括前文的氣候驟變、雁過傷心、黃花憔悴、梧桐細雨等一連串【淒慘的景象與感受】。", img:""},
+                {cat:"辛棄疾《青玉案》", q:"「東風夜放花千樹，更吹落、星如雨」描寫的是甚麼景象？", a:"描寫元宵節【煙火璀璨】（或花燈繁多）的熱鬧景象。這裡運用了比喻，將煙火/燈火比作花樹和流星雨。", img:""},
+                {cat:"辛棄疾《青玉案》", q:"「寶馬雕車香滿路」一句從甚麼感官描寫元宵盛況？", a:"從【嗅覺】（香滿路）和視覺（寶馬雕車）描寫。側面反映出遊人的富貴與遊客之多。", img:""}
+            ],
+            ops: [
+                {title:"羽扇綸巾", desc:"【談笑間】指定敵方一名「主將」禁言一回合，該回合敵方只能由「小兵」作答。", val:0},
+                {title:"大江東去", desc:"氣勢如虹！發動猛攻，對敵方現有分數進行「浪淘盡」，直接扣除敵方 20 點分數。", val:20},
+                {title:"驀然回首", desc:"絕處逢生。若答錯題目，可擁有一次「回首」機會（重新作答或換題）。", val:0},
+                {title:"心凝形釋", desc:"與萬化冥合，進入無敵狀態。抵銷下一次受到的任何懲罰（包括扣分或大轉盤）。", val:0},
+                {title:"雁過也", desc:"【卻是舊時相識】。可向場外「舊識」（老師或非參賽同學）求救一次。", val:0},
+                {title:"東風夜放", desc:"花千樹，星如雨。幸運大爆發，本題得分雙倍。", val:0},
+                {title:"亂石穿空", desc:"驚濤拍岸，捲起千堆雪。隨機指定敵方兩名隊員「被浪捲走」（暫停參與討論一回合）。", val:0},
+                {title:"一尊還酹江月", desc:"豁免權：向命運致敬，如果這題答錯，無需接受任何懲罰。", val:0},
+                {title:"眾裡尋他", desc:"在敵方隊伍中「尋找」一人幫助你作答。如果他答對，雙贏；答錯，雙輸。", val:0}
+            ],
+            puns: [
+                {title:"早生華髮", desc:"多情應笑我。全隊被嘲笑，士氣受損，本題倒扣 10 分。", val:10},
+                {title:"借酒澆愁", desc:"三杯兩盞淡酒，怎敵他晚來風急？頭昏腦脹，下回即使正確，分數減半。", val:0},
+                {title:"昏昏欲睡", desc:"施施而行，漫漫而遊。隊伍進入夢遊狀態，扣減30分", val:30},
+                {title:"點點滴滴", desc:"梧桐更兼細雨。這回合若答錯，扣分會像雨點一樣「點點滴滴」連續扣兩次。", val:0},
+                {title:"燈火闌珊", desc:"眾里尋他千百度。隊友失蹤了？下回合隊長必須「孤獨作答」，不可與隊員討論。", val:0},
+                {title:"憔悴損", desc:"人比黃花瘦。全隊體力不支，下回合必須全體「趴在桌上」作答。", val:0},
+                {title:"淒淒慘慘", desc:"回答下一題前，全隊必須用最悲傷的語氣先嘆氣三聲，否則答案無效。", val:0}
+            ],
+            wheel: [
+                "【驚濤拍岸】人體海浪：全組起立，用誇張肢體動作模擬「亂石穿空、驚濤拍岸」的畫面，需有配音。",
+                "【笑語盈盈】姨母笑：全組模仿古代仕女「笑語盈盈」，保持尷尬而不失禮貌的微笑定格 30 秒。",
+                "【一尊還酹江月】戲精上身：隊長需對著一個水樽（江月），深情朗誦《念奴嬌》下片，要演出「人生如夢」的滄桑感。",
+                "【怎一個愁字了得】連環嘆氣：全組輪流用不同的語氣（憤怒、哀怨、無奈、撒嬌）嘆氣說出「愁啊～」。",
+                "【望西山】登高望遠：全組站在椅子上（注意安全），模仿柳宗元發現新大陸的表情，大喊「始得西山宴遊記！」。",
+                "【雄姿英發】Chok樣定格：模仿周瑜，擺出最帥/最美的 Pose，給敵方隊伍拍照存證。",
+                "【淒淒慘慘戚戚】哭腔Rap：用悲傷的哭腔，以 Rap 的節奏唸出《聲聲慢》開頭十四個疊字。",
+                "【過目不忘】隨機抽取一句範文金句，全隊需在一分鐘內背出來。"
+            ],
+            roster: {
+                a: ["林衍耀","羅尹呈","董智恆","王昊鈞","黃敬熙","黃殷朗","楊泓治","邱啟義","楊其融","楊承軒","余倬騫","余陽沅"],
+                b: ["鄭智允","張曉晴","張畹津","林樂欣","呂鎧淇","苗可欣","戴靜欣","戴依曈","徐詠琪","尹祉善","黃梓婕","王詠恩"]
             }
-            alert("匯入成功！"); updateUI();
         };
-        r.readAsArrayBuffer(f);
-    }
 
-    window.onload = init;
-</script>
+        // --- 2. 遊戲核心邏輯 ---
+        let state = {
+            turn: 'a', // 'a' or 'b'
+            scores: { a: 100, b: 100 },
+            hearts: { a: 3, b: 3 },
+            curQ: null
+        };
+
+        window.onload = function() {
+            updateUI();
+            // 預填設定框
+            document.getElementById('input-roster-a').value = db.roster.a.join('\n');
+            document.getElementById('input-roster-b').value = db.roster.b.join('\n');
+        };
+
+        function updateUI() {
+            document.getElementById('q-count').innerText = db.questions.length;
+            const t = state.turn;
+            const a = document.getElementById('panel-a');
+            const b = document.getElementById('panel-b');
+            
+            if (t === 'a') { a.classList.add('active'); b.classList.remove('active'); }
+            else { b.classList.add('active'); a.classList.remove('active'); }
+            
+            ['a','b'].forEach(team => {
+                document.getElementById(`score-${team}`).innerText = state.scores[team];
+                let h = "";
+                for(let i=0; i<state.hearts[team]; i++) h += "❤️";
+                if(state.hearts[team]<=0) h = "💔";
+                document.getElementById(`hearts-${team}`).innerText = h;
+            });
+        }
+
+        function modStat(team, type, val) {
+            if (type === 'h') state.hearts[team] = Math.max(0, state.hearts[team] + val);
+            else state.scores[team] += val;
+            updateUI();
+        }
+
+        function drawQuestion() {
+            if (db.questions.length === 0) return alert("題庫已空！");
+            
+            const idx = Math.floor(Math.random() * db.questions.length);
+            state.curQ = db.questions[idx];
+            db.questions.splice(idx, 1);
+
+            const r = db.roster[state.turn];
+            const s = (r && r.length) ? r[Math.floor(Math.random() * r.length)] : "全體隊員";
+            
+            document.getElementById(`student-name-${state.turn}`).innerText = s;
+            document.getElementById(`student-name-${state.turn==='a'?'b':'a'}`).innerText = "---";
+            
+            const card = document.getElementById('game-card');
+            card.classList.remove('flipped');
+            
+            document.getElementById('q-cat').innerText = state.curQ.cat;
+            document.getElementById('q-text').innerText = state.curQ.q;
+            document.getElementById('q-ans').innerHTML = state.curQ.a;
+            
+            const img = document.getElementById('card-img');
+            const innerImg = img.querySelector('.q-img');
+            if(state.curQ.img && state.curQ.img.startsWith('http')) {
+                innerImg.style.backgroundImage = `url('${state.curQ.img}')`;
+                img.style.display = 'block';
+            } else {
+                img.style.display = 'none';
+            }
+
+            document.getElementById('btn-draw').classList.add('hidden');
+            document.getElementById('action-btns').classList.remove('hidden');
+            updateUI();
+        }
+
+        function closeQuestion() {
+            state.turn = state.turn === 'a' ? 'b' : 'a';
+            document.getElementById('btn-draw').classList.remove('hidden');
+            document.getElementById('action-btns').classList.add('hidden');
+            document.getElementById('game-card').classList.remove('flipped');
+            document.getElementById('student-name-a').innerText = "準備";
+            document.getElementById('student-name-b').innerText = "準備";
+            updateUI();
+        }
+
+        function flipCard() {
+            document.getElementById('game-card').classList.toggle('flipped');
+        }
+
+        function openSettings() {
+            document.getElementById('overlay-settings').style.display='flex';
+        }
+
+        function saveRoster() {
+            const ra = document.getElementById('input-roster-a').value.split('\n').filter(x=>x.trim());
+            const rb = document.getElementById('input-roster-b').value.split('\n').filter(x=>x.trim());
+            db.roster.a = ra;
+            db.roster.b = rb;
+            alert("名單已更新！");
+            document.getElementById('overlay-settings').style.display='none';
+        }
+
+        // --- Card Selection (Chance/Punish) ---
+        function initSelection(type) {
+            // 答錯邏輯：如果選的是懲罰(punish)，代表這一題答錯了，進入抽卡環節
+            // 根據您的要求，答錯 -> 懲罰卡。這裡不先扣分，而是看卡片結果。
+            
+            const pool = type === 'chance' ? db.ops : db.puns;
+            // 洗牌抽3張
+            const shuffled = [...pool].sort(() => 0.5 - Math.random());
+            const selected3 = shuffled.slice(0, 3);
+            while(selected3.length < 3) selected3.push({title:"空缺", desc:"...", val:0});
+
+            const grid = document.getElementById('cards-grid');
+            grid.innerHTML = '';
+            const overlayClass = type === 'chance' ? 'style-chance' : 'style-punish';
+            document.getElementById('overlay-select').className = `overlay ${overlayClass}`;
+            document.getElementById('select-title').innerText = type === 'chance' ? "✨ 錦囊妙計" : "⚡ 天劫 (懲罰卡)";
+
+            selected3.forEach((cardData) => {
+                const el = document.createElement('div');
+                el.className = 'tarot-card';
+                el.onclick = () => revealCard(el, cardData, type);
+                el.innerHTML = `
+                    <div class="tarot-face tarot-back">
+                        <div class="tarot-emblem">${type==='chance'?'★':'⚡'}</div>
+                    </div>
+                    <div class="tarot-face tarot-front">
+                        <div class="tf-type">${type==='chance'?'CHANCE':'PUNISHMENT'}</div>
+                        <div class="tf-title">${cardData.title}</div>
+                        <div class="tf-desc">${cardData.desc}</div>
+                    </div>
+                `;
+                grid.appendChild(el);
+            });
+
+            document.getElementById('overlay-select').style.display = 'flex';
+            document.getElementById('btn-confirm-select').classList.add('hidden');
+        }
+
+        function revealCard(el, data, type) {
+            if(el.classList.contains('flipped') || document.querySelectorAll('.tarot-card.flipped').length > 0) return;
+            el.classList.add('flipped');
+            document.querySelectorAll('.tarot-card').forEach(c => { if(c !== el) c.classList.add('disabled'); });
+
+            // 執行卡片效果
+            if(data.val !== 0) {
+                // 如果是懲罰卡，val通常是正數代表扣分，所以要取負
+                // 如果是機會卡中的 "大江東去" (扣敵方)，邏輯要另外寫，這裡暫時簡化為扣當前隊伍分
+                // 為了符合您Excel邏輯：
+                // 懲罰卡 val=10 -> 扣10分
+                if(type === 'punish') {
+                    modStat(state.turn, 's', -data.val); 
+                } else if (type === 'chance' && data.title === '大江東去') {
+                    // 特殊處理：扣敵方
+                    const enemy = state.turn === 'a' ? 'b' : 'a';
+                    modStat(enemy, 's', -data.val);
+                }
+            }
+
+            setTimeout(() => {
+                document.getElementById('btn-confirm-select').classList.remove('hidden');
+            }, 800);
+        }
+
+        function closeSelection() {
+            document.getElementById('overlay-select').style.display = 'none';
+            // 如果是抽完卡，通常代表這一回合結束，換下一組
+            // 這裡自動呼叫 closeQuestion 來換人
+            // 只有在遊戲進行中(有題目)時才自動換人
+            if(!document.getElementById('action-btns').classList.contains('hidden')) {
+                closeQuestion();
+            }
+        }
+
+        // --- Wheel Logic ---
+        let wheelSpinning = false;
+        function showWheel() {
+            document.getElementById('overlay-wheel').style.display='flex';
+            initWheel();
+            document.getElementById('btn-spin').disabled = false;
+            document.getElementById('btn-close-wheel').classList.add('hidden');
+        }
+
+        function initWheel() {
+            const cvs = document.getElementById('wheel-canvas');
+            const ctx = cvs.getContext('2d');
+            const w=500, h=500, cx=250, cy=250, r=240;
+            const len = db.wheel.length;
+            const arc = Math.PI*2/len;
+            const colors = ['#1a1a1a', '#222'];
+            
+            ctx.clearRect(0,0,w,h);
+            ctx.save();
+            ctx.translate(cx,cy);
+            
+            for(let i=0; i<len; i++) {
+                const ang = i*arc;
+                ctx.beginPath();
+                ctx.moveTo(0,0);
+                ctx.arc(0,0,r,ang,ang+arc);
+                ctx.fillStyle = colors[i%2];
+                ctx.fill();
+                ctx.lineWidth = 2; ctx.strokeStyle = "#d4af37"; ctx.stroke();
+                
+                ctx.save();
+                ctx.rotate(ang + arc/2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "#fff";
+                ctx.font = "bold 16px Arial";
+                const text = db.wheel[i].split("】")[0].replace("【","");
+                ctx.fillText(text, r-20, 5);
+                ctx.restore();
+            }
+            ctx.restore();
+        }
+
+        function spinWheel() {
+            if(wheelSpinning) return;
+            wheelSpinning = true;
+            document.getElementById('btn-spin').disabled = true;
+            const cvs = document.getElementById('wheel-canvas');
+            const totalRot = 360 * 5 + Math.random() * 360; 
+            cvs.style.transition = "transform 5s cubic-bezier(0.1,0,0.1,1)";
+            cvs.style.transform = `rotate(-${totalRot}deg)`;
+
+            setTimeout(() => {
+                wheelSpinning = false;
+                document.getElementById('btn-close-wheel').classList.remove('hidden');
+            }, 5000);
+        }
+    </script>
 </body>
 </html>
