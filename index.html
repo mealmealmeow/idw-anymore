@@ -6032,8 +6032,19 @@ function switchMainTab(target) {
 // showPage 保持 v10.6 版本即可，它已經兼容這種父子結構
 // 唯一要刪除的是 toggleMobileMenu 函數，因為按鈕已經沒了
 
-/* [v17.0] 頁面切換 (Scroll Top + Analysis Trigger) */
+// [v18.1.0] Show Page with Route Guard
 function showPage(pageId, focusElementId = null) {
+    // 🔥 Route Guard (守衛機制)
+    if (pageId === 'page2') {
+        const hasProject = window.currentAssignmentId || (allStudentRecords && allStudentRecords.length > 0);
+        if (!hasProject) {
+            // 溫柔踢人
+            if(typeof showToast === 'function') showToast("⚠️ 請先在首頁選擇或建立作業", "warning");
+            // 強制轉回首頁
+            pageId = 'page-home'; 
+        }
+    }
+
     document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
     const page = document.getElementById(pageId);
     if(page) page.classList.add('active');
@@ -6054,7 +6065,6 @@ function showPage(pageId, focusElementId = null) {
         if(homeBtn) homeBtn.classList.add('active');
         document.getElementById('sub-nav-container').style.display = 'none';
         
-        // 🔥 Fix 3: 回首頁置頂
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -6065,8 +6075,6 @@ function showPage(pageId, focusElementId = null) {
     // 數據刷新與觸發
     if (pageId === 'page-home') setTimeout(() => { if(typeof loadDashboard === 'function') loadDashboard(); }, 50);
     if (pageId === 'page8') { if(typeof loadAllClasses === 'function') loadAllClasses(); }
-    
-    // 🔥 Fix 7: 進入分析頁時，強制重新計算數據
     if (pageId === 'page5') { if(typeof renderAnalysisPage === 'function') renderAnalysisPage(); }
 
     if (focusElementId) {
@@ -10646,7 +10654,7 @@ function closeManageStudentsModal() {
     loadAllClasses(); // 刷新外面的卡片，更新「學生人數」
 }
 
-// [v18.0.1] Page 8: Render Master List (Safety Update)
+// [v18.1.0] Page 8: Render Master List (With Edit & Delete)
 async function loadMasterStudentList(classId) {
     const listContainer = document.getElementById('master-student-list');
     listContainer.innerHTML = '<div style="text-align:center; color:#999; padding:10px;">讀取中...</div>';
@@ -10679,13 +10687,13 @@ async function loadMasterStudentList(classId) {
         // 渲染列表
         let html = '<table style="width:100%; border-collapse:collapse; font-size:0.9rem;">';
         students.forEach(s => {
-            let displayNum = s.student_number;
+            let displayNum = s.student_number || '';
             if (displayNum && /^\d$/.test(displayNum)) displayNum = '0' + displayNum;
             
             const safeName = escapeHtml(s.name);
             const safeId = s.id;
-            // [v18.0.1] 安全處理：防止名字有單引號導致按鈕失效
             const nameForJs = (s.name || '').replace(/'/g, "\\'");
+            const numForJs = (s.student_number || '').replace(/'/g, "\\'");
 
             html += `
             <tr style="border-bottom:1px dashed #eee;">
@@ -10695,7 +10703,8 @@ async function loadMasterStudentList(classId) {
                     <button class="light-btn" style="padding:2px 6px; font-size:0.8rem;" onclick="showStudentHistory('${safeId}', '${nameForJs}')" title="查看成長歷程">📈</button>
                 </td>
                 <td style="padding:8px; text-align:right;">
-                    <!-- [v18.0.1] 傳入 nameForJs 以便顯示警示 -->
+                    <!-- [v18.1.0] 新增編輯按鈕 -->
+                    <button onclick="editStudentFromMaster('${safeId}', '${numForJs}', '${nameForJs}')" title="編輯" style="background:transparent; border:none; cursor:pointer; font-size:1rem; opacity:0.6; margin-right:5px;">✏️</button>
                     <button class="danger-btn" style="padding:2px 8px; font-size:0.75rem;" onclick="deleteStudentFromMaster('${safeId}', '${nameForJs}')">刪除</button>
                 </td>
             </tr>`;
@@ -10858,7 +10867,51 @@ async function deleteStudentFromMaster(studentId, studentName) {
     }
 }
 
+// [v18.1.0] Page 8: Edit Student Logic (UUID)
+async function editStudentFromMaster(studentId, oldNum, oldName) {
+    const classId = document.getElementById('manage-class-id').value;
 
+    // 1. 修改學號
+    const newNum = await showCustomModal({
+        icon: '🔢', 
+        title: '編輯學生', 
+        desc: `修改 [${oldName}] 的學號`,
+        showInput: true, 
+        defaultValue: oldNum
+    });
+    if (newNum === false) return; // 按了取消
+
+    // 2. 修改姓名
+    const newName = await showCustomModal({
+        icon: '✏️', 
+        title: '編輯學生', 
+        desc: '修改姓名',
+        showInput: true, 
+        defaultValue: oldName
+    });
+    if (newName === false) return; // 按了取消
+    
+    if (!newName.trim()) { alert("姓名不能為空"); return; }
+
+    // 3. 執行 UPDATE
+    try {
+        const { error } = await supabaseClient
+            .from('students')
+            .update({ 
+                student_number: newNum.trim(),
+                name: newName.trim()
+            })
+            .eq('id', studentId);
+
+        if (error) throw error;
+
+        if(typeof showToast === 'function') showToast("資料已更新", "success");
+        loadMasterStudentList(classId); // 刷新列表
+
+    } catch (e) {
+        alert("更新失敗：" + e.message);
+    }
+}
 
 // ==========================================
 // ====== Phase 2.1 (Part 2): 班級頁邏輯 ======
