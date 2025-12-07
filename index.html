@@ -7288,12 +7288,11 @@ async function saveCurrentStudentData(mode = 'cloud') {
       }
       
       // 更新總覽表記憶體 (但不強制重繪整個表格以免閃爍)
-      renderStudentOverviewTable(); 
+       renderStudentOverviewTable(); 
       isDataDirty = false; // 標記為已乾淨
       updateUIBasedOnAuthState();
-      
-      // 自動跳轉
-      setTimeout(() => scrollToSection(new Event('dummy'), 'student-select'), 100);
+      console.log("已原地儲存");
+    
   }
 }
 
@@ -9928,7 +9927,7 @@ function getOfflineProjectMeta() {
 // 為了防止舊代碼殘留，如果還有 loadOfflineData 函數，請手動刪除它，或將其內容清空
 function loadOfflineData() { return []; }
 
-// [v10.4] 渲染文件夾網格 (Cozy Folder Grid)
+/* === [v18.2.3] renderFocusList 替換 (隱藏分母，只顯示已閱人數) === */
 function renderFocusList(items, container) {
     if (items.length === 0) {
         container.style.display = 'block'; 
@@ -9952,28 +9951,29 @@ function renderFocusList(items, container) {
         // 準備 Edit Modal 數據
         const itemSafe = JSON.stringify(item).replace(/"/g, '&quot;');
 
-       /* [v17.1] Dashboard Card (含 Progress Bar) */
-html += `
-<div class="cozy-folder" onclick="${clickAction}">
-    <div style="position:absolute; top:15px; right:15px;" onclick="event.stopPropagation();">
-        <button onclick="openEditModal(${itemSafe})" style="background:transparent; border:none; color:#ddd; cursor:pointer; font-size:1.1rem; padding:5px;">⚙️</button>
-    </div>
+       /* [v18.2.3] Dashboard Card (改為顯示具體人數) */
+        html += `
+        <div class="cozy-folder" onclick="${clickAction}">
+            <div style="position:absolute; top:15px; right:15px;" onclick="event.stopPropagation();">
+                <button onclick="openEditModal(${itemSafe})" style="background:transparent; border:none; color:#ddd; cursor:pointer; font-size:1.1rem; padding:5px;">⚙️</button>
+            </div>
 
-    <div class="folder-meta">
-        <span class="folder-class">${escapeHtml(item.class_name)}</span>
-        <div class="folder-title">${escapeHtml(item.topic)}</div>
-    </div>
+            <div class="folder-meta">
+                <span class="folder-class">${escapeHtml(item.class_name)}</span>
+                <div class="folder-title">${escapeHtml(item.topic)}</div>
+            </div>
 
-    <div class="task-progress">
-        <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:#888; margin-bottom:4px;">
-            <span>📅 ${dateStr}</span>
-            <span>${item.progress}%</span>
-        </div>
-        <div class="task-progress-bar-bg">
-            <div class="task-progress-bar-fill" style="width: ${item.progress}%"></div>
-        </div>
-    </div>
-</div>`;
+            <div class="task-progress">
+                <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:#888; margin-bottom:4px;">
+                    <span>📅 ${dateStr}</span>
+                    <!-- [修正] 這裡不再顯示 %，改為顯示已閱人數 -->
+                    <span style="font-weight:bold; color:var(--accent-color);">已閱 ${item.graded_count} 人</span>
+                </div>
+                <div class="task-progress-bar-bg">
+                    <div class="task-progress-bar-fill" style="width: ${item.progress}%"></div>
+                </div>
+            </div>
+        </div>`;
 
     });
     container.innerHTML = html;
