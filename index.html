@@ -288,56 +288,6 @@
   }
 }
 
-/* === [v20.1] 老花友善與底部導航 === */
-
-/* 電腦版字體微調 (看得舒服啲) */
-@media (min-width: 1024px) {
-    body {
-        font-size: 17px; /* 稍微加大基底字體 */
-    }
-    .input-group label {
-        font-size: 1.1rem; /* 標籤再大啲 */
-    }
-    .main-container {
-        max-width: 95%; /* 用盡闊度，唔好留太多白邊 */
-    }
-}
-
-/* 底部導航按鈕組 (Page 2 專用) */
-.bottom-nav-group {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 2px dashed #e1d8c8;
-}
-
-.bottom-nav-btn {
-    padding: 12px 25px;
-    font-size: 1.1rem;
-    border-radius: 12px;
-    cursor: pointer;
-    border: none;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: #fff;
-    border: 1px solid #ddd;
-    color: #555;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-}
-
-.bottom-nav-btn:hover {
-    background: #f7f3eb;
-    border-color: var(--accent-color);
-    color: var(--accent-color);
-    transform: translateY(-2px);
-}
-
-
-
-
 
   /* --- 文青風色彩與字體定義 --- */
   :root {
@@ -3930,6 +3880,12 @@ header h1 {
     border-top: 1px solid #f5f5f5;
     padding-top: 5px;
 }
+/* [v18.1.1] Modal Layering Fix */
+/* 確保通用彈窗 (編輯/刪除確認) 永遠在管理名單之上 */
+#pop-generic-modal { z-index: 2147483650 !important; }
+#pop-manage-students-modal { z-index: 2147483640 !important; }
+/* 確保通用彈窗的底色更深一點，區分層次 */
+#pop-generic-modal .pop-modal { box-shadow: 0 25px 80px rgba(0,0,0,0.5); }
 </style>
 
 </head>
@@ -4350,18 +4306,7 @@ header h1 {
                     </details>
                 </div>
             </div>
-<!-- [v20.1] 底部學生切換導航 -->
-            <div class="bottom-nav-group">
-                <button class="bottom-nav-btn" onclick="navigateToStudent('prev')">
-                    ⏪ 上一位同學
-                </button>
-                <div style="font-size:0.9rem; color:#999; display:flex; align-items:center;">
-                    (批改完成後，可直接按下一位)
-                </div>
-                <button class="bottom-nav-btn" onclick="navigateToStudent('next')">
-                    下一位同學 ⏩
-                </button>
-            </div>
+
            <!-- [Pro-v9.4-FunctionalFix] 單一同步按鈕 -->
 <div class="btn-group" style="justify-content: center; gap: 15px;">
     <!-- 只保留同步按鈕 -->
@@ -5237,7 +5182,10 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const { createClient } = supabase;
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+
 // --- 全域變數 ---
+// [v18.2.0] Page 8 Inline Editing State
+let _editingMasterStudentId = null;
 let currentUser = null;
 let isDataDirty = false; 
 let allStudentRecords = [];
@@ -6001,7 +5949,7 @@ function applyCritiquesToDOM(critiques) {
 }
 
 
-/* [v17.0] 全域監聽 (題目同步修復) */
+// [v18.2.0] Global Listeners (With Pessimistic Hook)
 function attachGlobalListeners() {
     // 登入登出按鈕
     const loginBtn = document.getElementById('login-btn'); if(loginBtn) loginBtn.addEventListener('click', handleLogin);
@@ -6028,17 +5976,34 @@ function attachGlobalListeners() {
     // 學生下拉選單
     document.getElementById('student-select').addEventListener('change', (e) => loadStudentData(e.target.value));
 
-    // 自動儲存與計算
+    // --- [v18.2.0] 分數輸入框專用監聽 (悲觀更新) ---
+    const scoreInputs = ['score-content', 'score-expression', 'score-structure', 'score-punctuation', 'score-typos'];
+    scoreInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            // 1. 打字時：只計算總分 (不存 DB，避免太頻繁)
+            el.addEventListener('input', () => {
+                calculateTotalScore();
+            });
+            // 2. 離開/Enter 時：執行悲觀儲存
+            el.addEventListener('change', (e) => {
+                handlePessimisticScoreSave(e.target);
+            });
+        }
+    });
+
+    // 自動儲存與計算 (排除分數輸入框，避免衝突)
     document.body.addEventListener('input', (e) => {
         const page = e.target.closest('.page-content');
         if(!page) return;
+        
+        // 如果是分數框，上面已經處理了，這裡忽略
+        if (e.target.id && e.target.id.startsWith('score-')) return;
+
         triggerAutoSave();
         
         if (page.id === 'page2') {
-            if (e.target.closest('.score-main-grid')) calculateTotalScore();
-            // Checkbox 聯動文字
             if (e.target.matches('input[type="checkbox"]') || e.target.closest('.interactive-module')) {
-                 // 這裡只觸發 Output 更新，不做 populateEditableTextarea 以免覆蓋手寫
                  updateAllOutputs();
             } else {
                  updateAllOutputs();
@@ -6048,7 +6013,7 @@ function attachGlobalListeners() {
         }
     });
 
-    // 其他檔案輸入監聽 (保持不變)
+    // 其他檔案輸入監聽
     document.getElementById('import-student-list').addEventListener('change', handleStudentListImport);
     document.getElementById('import-progress-excel').addEventListener('change', handleProgressImportExcel);
     document.getElementById('import-critique-excel').addEventListener('change', handleCritiqueImportExcel);
@@ -6093,16 +6058,59 @@ function switchMainTab(target) {
 // showPage 保持 v10.6 版本即可，它已經兼容這種父子結構
 // 唯一要刪除的是 toggleMobileMenu 函數，因為按鈕已經沒了
 
-// [v20.1] 頁面切換 (加入 Page 1 重置邏輯)
+// [v18.1.0] Show Page with Route Guard
 function showPage(pageId, focusElementId = null) {
-    // 1. 如果進入 Page 1，強制重置表單 (Fresh Form)
-    if (pageId === 'page1') {
-        resetPage1Form();
+    // 🔥 Route Guard (守衛機制)
+    if (pageId === 'page2') {
+        const hasProject = window.currentAssignmentId || (allStudentRecords && allStudentRecords.length > 0);
+        if (!hasProject) {
+            // 溫柔踢人
+            if(typeof showToast === 'function') showToast("⚠️ 請先在首頁選擇或建立作業", "warning");
+            // 強制轉回首頁
+            pageId = 'page-home'; 
+        }
     }
-    
-    // ... (以下保留原有代碼) ...
+
     document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
-    // ...
+    const page = document.getElementById(pageId);
+    if(page) page.classList.add('active');
+
+    // Nav 狀態更新
+    document.querySelectorAll('.sub-nav-btn').forEach(n => n.classList.remove('active'));
+    const subBtn = document.getElementById('nav-' + pageId);
+    if (subBtn) {
+        subBtn.classList.add('active');
+        const group = subBtn.closest('.sub-nav-group');
+        if(group) {
+            switchMainTab(group.id.replace('sub-nav-', ''));
+            document.getElementById('nav-' + pageId).classList.add('active');
+        }
+    } else if (pageId === 'page-home') {
+        document.querySelectorAll('.main-nav .nav-btn').forEach(b => b.classList.remove('active'));
+        const homeBtn = document.querySelector('.main-nav .nav-btn[data-target="home"]');
+        if(homeBtn) homeBtn.classList.add('active');
+        document.getElementById('sub-nav-container').style.display = 'none';
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    if (typeof autoExpandCurrentSection === 'function') autoExpandCurrentSection();
+    const fNav = document.getElementById('floating-nav');
+    if(fNav) fNav.classList.toggle('visible', pageId === 'page2');
+
+    // 數據刷新與觸發
+    if (pageId === 'page-home') setTimeout(() => { if(typeof loadDashboard === 'function') loadDashboard(); }, 50);
+    if (pageId === 'page8') { if(typeof loadAllClasses === 'function') loadAllClasses(); }
+    if (pageId === 'page5') { if(typeof renderAnalysisPage === 'function') renderAnalysisPage(); }
+
+    if (focusElementId) {
+        setTimeout(() => {
+            const el = document.getElementById(focusElementId);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 150);
+    }
+    localStorage.setItem('idw_last_page', pageId);
+}
 
 // 4. 🔥 補回缺失的 buildCardHtml 函數 (修復紅字錯誤)
 // 這個函數被 Dashboard 和 Archive 共用
@@ -7287,6 +7295,84 @@ async function saveCurrentStudentData(mode = 'cloud') {
       // 自動跳轉
       setTimeout(() => scrollToSection(new Event('dummy'), 'student-select'), 100);
   }
+}
+
+// [v18.2.0] Pessimistic Score Save (安全鎖定版)
+async function handlePessimisticScoreSave(input) {
+    // 1. 準備數據
+    const scoreType = input.id.replace('score-', ''); // content, expression...
+    const newValue = input.value;
+    const oldValue = input.defaultValue; // 瀏覽器會記住舊值
+    
+    // 獲取當前作業 ID 和 學生 ID
+    const assignmentId = window.currentAssignmentId;
+    // 這裡我們需要從 student-select 找到當前學生的 DB ID
+    const studentName = document.getElementById('student-select').value;
+    const studentRecord = allStudentRecords.find(r => r.originalName === studentName);
+    
+    if (!assignmentId || !studentRecord || !studentRecord.dbId) {
+        // 如果沒有專案或學生ID，暫時只做本地計算 (降級處理)
+        calculateTotalScore();
+        triggerAutoSave();
+        return;
+    }
+
+    // 2. UI 鎖定 (黃色 Loading)
+    input.style.backgroundColor = '#fffde7'; // 淡黃
+    input.style.borderColor = '#fbc02d';
+    // input.disabled = true; // 暫不 Disable，以免失焦問題，用顏色提示即可
+
+    try {
+        // 3. 準備 Payload
+        const updatePayload = { 
+            assignment_id: assignmentId,
+            student_id: studentRecord.dbId,
+            updated_at: new Date().toISOString()
+        };
+        // 動態設定要改的欄位
+        let dbField = '';
+        if (scoreType === 'typos') dbField = 'typo_score';
+        else dbField = `${scoreType}_score`;
+        
+        updatePayload[dbField] = parseFloat(newValue) || 0;
+
+        // 因為 Total Score 會變，所以要順便計埋 Total 並儲存
+        const currentTotal = calculateTotalScore(); 
+        updatePayload['total_score'] = currentTotal;
+
+        // 4. 發送 Supabase 請求
+        const { error } = await supabaseClient
+            .from('results')
+            .upsert(updatePayload, { onConflict: 'assignment_id, student_id' });
+
+        if (error) throw error;
+
+        // 5. 成功 (綠色閃一下)
+        input.style.backgroundColor = '#e8f5e9'; // 淡綠
+        input.style.borderColor = '#4caf50';
+        input.defaultValue = newValue; // 更新基準值
+        
+        // 更新記憶體 (保持同步)
+        if (studentRecord.data && studentRecord.data.scores) {
+            studentRecord.data.scores[scoreType] = newValue;
+            studentRecord.data.scores.total = currentTotal;
+        }
+
+        setTimeout(() => {
+            input.style.backgroundColor = ''; // 還原
+            input.style.borderColor = '';
+        }, 1000);
+
+    } catch (err) {
+        console.error("Save failed:", err);
+        // 6. 失敗 (紅色 + 還原數值)
+        input.style.backgroundColor = '#ffebee'; // 淡紅
+        input.style.borderColor = '#c62828';
+        input.value = oldValue; // 還原
+        calculateTotalScore(); // 重新計算 Total
+        
+        alert(`❌ 儲存失敗！請檢查網絡。\n數值已還原為: ${oldValue}`);
+    }
 }
 
 function loadStudentData(studentOriginalName) {
@@ -10672,7 +10758,7 @@ function closeManageStudentsModal() {
     loadAllClasses(); // 刷新外面的卡片，更新「學生人數」
 }
 
-// [v18.0.1] Page 8: Render Master List (Safety Update)
+// [v18.2.0] Page 8: Render List with Inline Editing
 async function loadMasterStudentList(classId) {
     const listContainer = document.getElementById('master-student-list');
     listContainer.innerHTML = '<div style="text-align:center; color:#999; padding:10px;">讀取中...</div>';
@@ -10702,29 +10788,48 @@ async function loadMasterStudentList(classId) {
             return collator.compare(a.name || '', b.name || '');
         });
 
-        // 渲染列表
+        // 渲染表格
         let html = '<table style="width:100%; border-collapse:collapse; font-size:0.9rem;">';
         students.forEach(s => {
-            let displayNum = s.student_number;
-            if (displayNum && /^\d$/.test(displayNum)) displayNum = '0' + displayNum;
-            
-            const safeName = escapeHtml(s.name);
             const safeId = s.id;
-            // [v18.0.1] 安全處理：防止名字有單引號導致按鈕失效
-            const nameForJs = (s.name || '').replace(/'/g, "\\'");
+            
+            // 判斷此行是否正在編輯
+            if (_editingMasterStudentId === safeId) {
+                // === 編輯模式 (顯示 Input) ===
+                html += `
+                <tr style="background:#fffde7; border-bottom:1px solid #ddd;">
+                    <td style="padding:8px; width:60px;">
+                        <input type="text" id="edit-num-${safeId}" value="${escapeHtmlAttr(s.student_number)}" class="pop-input" style="padding:4px; margin:0; text-align:center;">
+                    </td>
+                    <td style="padding:8px;">
+                        <input type="text" id="edit-name-${safeId}" value="${escapeHtmlAttr(s.name)}" class="pop-input" style="padding:4px; margin:0;">
+                    </td>
+                    <td style="padding:8px; text-align:right; white-space:nowrap;">
+                        <button class="action-btn" style="padding:4px 8px; font-size:0.8rem; margin-right:5px;" onclick="saveMasterStudentInline('${safeId}')">💾</button>
+                        <button class="secondary-btn" style="padding:4px 8px; font-size:0.8rem;" onclick="cancelMasterStudentInline()">✕</button>
+                    </td>
+                </tr>`;
+            } else {
+                // === 閱讀模式 (顯示文字) ===
+                let displayNum = s.student_number || '';
+                if (displayNum && /^\d$/.test(displayNum)) displayNum = '0' + displayNum;
+                
+                // 安全引號
+                const nameForJs = (s.name || '').replace(/'/g, "\\'");
 
-            html += `
-            <tr style="border-bottom:1px dashed #eee;">
-                <td style="padding:8px; width:50px; font-weight:bold; color:#5A8F7B;">${escapeHtml(displayNum || '-')}</td>
-                <td style="padding:8px; display:flex; align-items:center; gap:8px;">
-                    ${safeName}
-                    <button class="light-btn" style="padding:2px 6px; font-size:0.8rem;" onclick="showStudentHistory('${safeId}', '${nameForJs}')" title="查看成長歷程">📈</button>
-                </td>
-                <td style="padding:8px; text-align:right;">
-                    <!-- [v18.0.1] 傳入 nameForJs 以便顯示警示 -->
-                    <button class="danger-btn" style="padding:2px 8px; font-size:0.75rem;" onclick="deleteStudentFromMaster('${safeId}', '${nameForJs}')">刪除</button>
-                </td>
-            </tr>`;
+                html += `
+                <tr style="border-bottom:1px dashed #eee;">
+                    <td style="padding:8px; width:60px; font-weight:bold; color:#5A8F7B;">${escapeHtml(displayNum || '-')}</td>
+                    <td style="padding:8px; display:flex; align-items:center; gap:8px;">
+                        ${escapeHtml(s.name)}
+                        <button class="light-btn" style="padding:2px 6px; font-size:0.8rem; background:#f0f0f0; color:#888;" onclick="showStudentHistory('${safeId}', '${nameForJs}')" title="查看成長歷程">📈</button>
+                    </td>
+                    <td style="padding:8px; text-align:right; white-space:nowrap;">
+                        <button onclick="_editingMasterStudentId='${safeId}'; loadMasterStudentList('${classId}');" title="編輯" style="background:transparent; border:none; cursor:pointer; font-size:1rem; margin-right:8px;">✏️</button>
+                        <button class="danger-btn" style="padding:2px 8px; font-size:0.75rem;" onclick="deleteStudentFromMaster('${safeId}', '${nameForJs}')">刪除</button>
+                    </td>
+                </tr>`;
+            }
         });
         html += '</table>';
         listContainer.innerHTML = html;
@@ -10733,6 +10838,38 @@ async function loadMasterStudentList(classId) {
         console.error(error);
         listContainer.innerHTML = `<div style="color:red;">讀取錯誤：${error.message}</div>`;
     }
+}
+
+// [v18.2.0] Page 8 Inline Save
+async function saveMasterStudentInline(studentId) {
+    const newNum = document.getElementById(`edit-num-${studentId}`).value.trim();
+    const newName = document.getElementById(`edit-name-${studentId}`).value.trim();
+    const classId = document.getElementById('manage-class-id').value;
+
+    if (!newName) { alert("姓名不能為空"); return; }
+
+    try {
+        const { error } = await supabaseClient
+            .from('students')
+            .update({ student_number: newNum, name: newName })
+            .eq('id', studentId);
+
+        if (error) throw error;
+
+        // 成功，退出編輯模式並刷新
+        _editingMasterStudentId = null;
+        if(typeof showToast === 'function') showToast("已更新", "success");
+        loadMasterStudentList(classId);
+
+    } catch (e) {
+        alert("更新失敗：" + e.message);
+    }
+}
+
+function cancelMasterStudentInline() {
+    _editingMasterStudentId = null;
+    const classId = document.getElementById('manage-class-id').value;
+    loadMasterStudentList(classId);
 }
 
 // 4. 處理 Excel 匯入 (核心功能)
@@ -10850,17 +10987,22 @@ async function addSingleStudentToMaster() {
     }
 }
 
-// [v18.0.1] Page 8: Delete Logic (Red Alert)
+// [v18.1.1] Page 8: Delete Logic (Custom UI)
 async function deleteStudentFromMaster(studentId, studentName) {
-    // 1. 強力防呆確認
-    const msg = `⚠️ 危險動作 ⚠️\n\n確定要從母名單移除學生 [${studentName}] 嗎？\n\n注意：這不會影響「已建立」的作業專案，\n但會影響之後的新增作業。`;
+    // 1. 使用自定義 Modal 取代原生 confirm
+    const isConfirmed = await showCustomModal({
+        icon: '🗑️',
+        title: '危險動作',
+        desc: `確定要從母名單移除 [${studentName}] 嗎？\n此操作無法復原，且會影響日後的新增作業。`,
+        confirmText: '確認移除',
+        cancelText: '取消' // 按取消會回傳 false
+    });
     
-    if (!confirm(msg)) return;
+    if (!isConfirmed) return;
     
     const classId = document.getElementById('manage-class-id').value;
-    const btn = event.target; // 鎖定按鈕防止連按
-    const originalText = btn.textContent;
-    btn.textContent = "..."; btn.disabled = true;
+    // 雖然 Custom Modal 無按鈕鎖定 (因為是 await)，但這裡可以加一點視覺反饋
+    if(typeof showToast === 'function') showToast("正在移除...", "info");
 
     try {
         const { error } = await supabaseClient
@@ -10870,21 +11012,67 @@ async function deleteStudentFromMaster(studentId, studentName) {
             
         if (error) throw error;
         
-        // 成功後刷新
+        // 成功後刷新列表
         await loadMasterStudentList(classId);
         
-        // 如果有 Toast 就用，沒有就用 Alert
         if(typeof showToast === 'function') showToast(`已移除：${studentName}`, "success");
 
     } catch (error) {
-        alert("刪除失敗：" + error.message);
-    } finally {
-        // 防止列表刷新太快導致按鈕不存在而報錯
-        if(btn) { btn.textContent = originalText; btn.disabled = false; }
+        // 使用 Custom Modal 顯示錯誤 (比較一致)
+        showCustomModal({
+            icon: '❌',
+            title: '刪除失敗',
+            desc: error.message,
+            confirmText: '知道了'
+        });
     }
 }
 
+// [v18.1.0] Page 8: Edit Student Logic (UUID)
+async function editStudentFromMaster(studentId, oldNum, oldName) {
+    const classId = document.getElementById('manage-class-id').value;
 
+    // 1. 修改學號
+    const newNum = await showCustomModal({
+        icon: '🔢', 
+        title: '編輯學生', 
+        desc: `修改 [${oldName}] 的學號`,
+        showInput: true, 
+        defaultValue: oldNum
+    });
+    if (newNum === false) return; // 按了取消
+
+    // 2. 修改姓名
+    const newName = await showCustomModal({
+        icon: '✏️', 
+        title: '編輯學生', 
+        desc: '修改姓名',
+        showInput: true, 
+        defaultValue: oldName
+    });
+    if (newName === false) return; // 按了取消
+    
+    if (!newName.trim()) { alert("姓名不能為空"); return; }
+
+    // 3. 執行 UPDATE
+    try {
+        const { error } = await supabaseClient
+            .from('students')
+            .update({ 
+                student_number: newNum.trim(),
+                name: newName.trim()
+            })
+            .eq('id', studentId);
+
+        if (error) throw error;
+
+        if(typeof showToast === 'function') showToast("資料已更新", "success");
+        loadMasterStudentList(classId); // 刷新列表
+
+    } catch (e) {
+        alert("更新失敗：" + e.message);
+    }
+}
 
 // ==========================================
 // ====== Phase 2.1 (Part 2): 班級頁邏輯 ======
@@ -11067,32 +11255,6 @@ document.addEventListener('click', (e) => {
         loadAllClasses();
     }
 });
-
-// [v20.1] 重置 Page 1 表單 (清除所有殘留)
-function resetPage1Form() {
-    // 清空題目
-    const topicInput = document.getElementById('topic');
-    if (topicInput) topicInput.value = '';
-    
-    // 重置班級選單 (回到第一項 "請選擇")
-    const classSelect = document.getElementById('setup-class-select');
-    if (classSelect) classSelect.selectedIndex = 0;
-    
-    // 隱藏學生清單區域
-    const studentArea = document.getElementById('setup-student-area');
-    if (studentArea) studentArea.style.display = 'none';
-    
-    // 清空勾選的學生
-    const checklist = document.getElementById('setup-student-checklist');
-    if (checklist) checklist.innerHTML = '';
-    
-    // 清除全域暫存
-    window.currentClassId = null;
-    window.currentAssignmentId = null; // 重要！斷開舊連結
-    
-    // 更新 Header (會變回空白)
-    updateHeaderInfo();
-}
 
 // ✅✅✅ 貼上結束 ✅✅✅
 
@@ -11313,58 +11475,45 @@ function toggleAllSetupStudents(checked) {
 /* === [v16.1 Fix] Page 1 啟動批改 (純班級版) === */
 /* ================================================= */
 
-/* [v20.1] Page 1 啟動批改 (嚴格確認版) */
 async function startGradingWithSetup(actionType) {
     const topicInput = document.getElementById('topic');
-    const select = document.getElementById('setup-class-select');
-    
-    // 1. 基本檢查
     if (!topicInput || !topicInput.value.trim()) {
         alert("請輸入作文題目！");
         if(topicInput) topicInput.focus();
         return;
     }
+
+    const select = document.getElementById('setup-class-select');
     if (!select || !select.value) {
         alert("請選擇班級！");
         return;
     }
 
-    // 2. 檢查有無揀學生
+    // 1. 檢查有無揀學生
     const checkedCards = document.querySelectorAll('#setup-student-checklist .student-check-card.checked');
     if (checkedCards.length === 0) {
         alert("⚠️ 請至少勾選一位學生！");
         return;
     }
 
-    const className = select.options[select.selectedIndex].dataset.className || select.options[select.selectedIndex].text;
-    const topicTitle = topicInput.value.trim();
-    const studentCount = checkedCards.length;
-
-    // 3. 🔥 彈出 Pop Art 確認 Modal (Double Confirm)
-    const userConfirmed = await showCustomModal({
-        icon: '🚀',
-        title: '建立新作業確認',
-        desc: `請核對以下資料：\n\n📌 班別：${className}\n📌 題目：${topicTitle}\n📌 人數：${studentCount} 人\n\n⚠️ 注意：建立後「班別」與「題目」無法更改，如有錯誤需刪除重來。`,
-        confirmText: '確定建立',
-        cancelText: '返回修改'
-    });
-
-    if (!userConfirmed) return; // 用戶反悔
-
-    // --- 用戶確認後，開始執行 ---
-
+    // 2. 準備數據
+    const sourceClass = select.options[select.selectedIndex].dataset.className || '';
     window.currentClassId = select.value;
-    window.currentProjectType = 'cloud';
+    window.currentProjectType = 'cloud'; // 強制雲端模式
     
-    // 準備名單
+    // 初始化變數
+    allStudentRecords = [];
     let rawStudentList = "";
-    const tempRecords = [];
     
+    // 3. 處理學生名單
+    const tempRecords = [];
     checkedCards.forEach(card => {
-        const info = card.dataset.info; 
-        const dbId = card.dataset.dbId;
+        const info = card.dataset.info; // "01-陳大文"
+        const dbId = card.dataset.dbId; // Database ID
         const p = parseStudentName(info);
+
         rawStudentList += info + "\n";
+
         tempRecords.push({
             number: p.number,
             name: p.name,
@@ -11379,16 +11528,19 @@ async function startGradingWithSetup(actionType) {
 
     // 4. 建立雲端專案 (Assignments)
     if (currentUser) {
-        // Loading 狀態
-        if(typeof showToast === 'function') showToast("☁️ 正在雲端建立檔案...", "info");
+        // 改變按鈕狀態
+        const saveBtn = event.target; // 獲取點擊的按鈕
+        const orgText = saveBtn.textContent;
+        saveBtn.textContent = "正在建立..."; saveBtn.disabled = true;
 
         try {
+            // 使用 upsert 建立或獲取專案
             const { data: newAssign, error: assignError } = await supabaseClient
                 .from('assignments')
                 .upsert({
                     user_id: currentUser.id,
                     class_id: window.currentClassId,
-                    title: topicTitle,
+                    title: topicInput.value.trim(),
                     created_at: new Date().toISOString()
                 }, { onConflict: 'class_id, title' })
                 .select()
@@ -11397,35 +11549,44 @@ async function startGradingWithSetup(actionType) {
             if (assignError) throw assignError;
 
             window.currentAssignmentId = newAssign.id;
-            console.log("✅ 專案已建立 ID:", newAssign.id);
+            console.log("✅ 專案已建立，ID:", newAssign.id);
 
-            // 刷新 Dashboard (背景做)
-            if (typeof loadDashboard === 'function') loadDashboard();
+            // 刷新 Dashboard
+            if (typeof loadDashboard === 'function') {
+                loadDashboard();
+                setTimeout(() => loadDashboard(), 800);
+            }
 
         } catch (err) {
             console.error("建立專案錯誤:", err);
-            alert("雲端建立失敗 (請檢查網絡)，但您仍可先進行離線編輯。\n錯誤：" + err.message);
+            // 錯誤不阻擋進入批改，只係 Sync 唔到
+        } finally {
+            saveBtn.textContent = orgText; saveBtn.disabled = false;
         }
     }
 
     // 5. 同步 UI 到 Page 2
     if(document.getElementById('student-names')) document.getElementById('student-names').value = rawStudentList;
-    if(document.getElementById('student-class')) document.getElementById('student-class').value = className; // 修正：用 className 變數
-    if(document.getElementById('page2-topic-display')) document.getElementById('page2-topic-display').value = topicTitle;
+    if(document.getElementById('student-class')) document.getElementById('student-class').value = sourceClass;
+    
+    // 同步 Page 2 題目欄 (v11.8 功能)
+    if(document.getElementById('page2-topic-display')) document.getElementById('page2-topic-display').value = topicInput.value.trim();
 
     updateStudentDropdown();
-    updateHeaderInfo(); // 🔥 Header 即時更新
+    updateHeaderInfo();
 
-    // 6. 跳轉 (載入評語)
+    // 6. 跳轉
     if (actionType === 'default') {
-        loadCannedCritiquesAndFocus(); 
+        loadCannedCritiquesAndFocus(); // 載入罐頭並跳轉
     } else {
+        // 手動模式：清空評語庫，直接跳轉
         const cData = document.getElementById('critique-data');
         if(cData) cData.innerHTML = '';
         buildChecklist();
         buildOverviewPage();
+        
         showPage('page2', 'student-select');
-        if(typeof showToast === 'function') showToast(`✅ 成功開啟：${topicTitle}`, "success");
+        if(typeof showToast === 'function') showToast(`已建立作業：${allStudentRecords.length} 位學生`, "success");
     }
 }
 
