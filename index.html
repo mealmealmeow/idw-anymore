@@ -7177,20 +7177,16 @@ function deleteCommonTypo(id) {
   }
 }
 
-// [v18.4.0] Nav to Student (Auto Scroll Up)
+/* --- 學生資料儲存、讀取與總覽 --- */
+
 function navigateToStudent(direction) {
   const select = document.getElementById('student-select');
   if (select.options.length <= 1) return;
-  
   let newIndex = select.selectedIndex + (direction === 'next' ? 1 : -1);
   if (newIndex >= select.options.length) newIndex = 0; 
   if (newIndex < 0) newIndex = select.options.length - 1; 
-  
   select.selectedIndex = newIndex;
   select.dispatchEvent(new Event('change'));
-  
-  // 🔥 轉人後，自動滑上去睇學生名
-  scrollToSection(new Event('dummy'), 'grading-section-student');
 }
 
 // [v18.3.0] Unified Save (No Jump + Fail Fast)
@@ -9743,31 +9739,46 @@ function checkLocalBackup() {
     }
 }
 
-// [v18.4.0] Restore with Local-to-Cloud Bridge
-async function restoreFromLocalBackup() {
+// [Pro-v4.2-UI] 還原備份 (修復報錯)
+function restoreFromLocalBackup() {
     const backup = localStorage.getItem(BACKUP_KEY);
-    if (!backup) { alert("找不到備份資料。"); return; }
+    if (!backup) {
+        alert("找不到備份資料。");
+        return;
+    }
 
     try {
         const data = JSON.parse(backup);
 
-        // 1. 還原基本資料 (同舊版)
+        // 還原評語庫
         if (data.critiques && data.critiques.length > 0) {
             const cData = document.getElementById('critique-data');
-            if(cData) { cData.innerHTML = ''; applyCritiquesToDOM(data.critiques); }
+            if(cData) {
+                cData.innerHTML = '';
+                applyCritiquesToDOM(data.critiques);
+            }
         }
+
+        // 還原基礎資料
         if(document.getElementById('student-class')) document.getElementById('student-class').value = data.className || '';
         if(document.getElementById('topic')) document.getElementById('topic').value = data.topic || '';
         if(document.getElementById('student-names')) document.getElementById('student-names').value = data.namesText || '';
         commonTypos = data.typos || [];
-        
+
+        // 還原學生資料
         let restoredRecords = data.students || [];
         if (data.liveEdit && data.liveEdit.name) {
             const idx = restoredRecords.findIndex(r => r.originalName === data.liveEdit.name);
-            if (idx >= 0) restoredRecords[idx].data = { ...restoredRecords[idx].data, ...data.liveEdit.data };
+            if (idx >= 0) {
+                restoredRecords[idx].data = {
+                    ...restoredRecords[idx].data,
+                    ...data.liveEdit.data
+                };
+            }
         }
         allStudentRecords = restoredRecords;
 
+        // 重建 UI
         updateStudentDropdown();
         buildChecklist();
         buildOverviewPage();
@@ -9775,44 +9786,35 @@ async function restoreFromLocalBackup() {
         renderStudentOverviewTable();
         updateHeaderInfo();
 
-        // 🔥 [核心修正] 2. 嘗試建立雲端連結 (Bridge)
-        if (currentUser && data.className && data.topic) {
-            console.log("嘗試將本地備份連接至雲端...");
-            // 嘗試搜尋 Class ID
-            const { data: cls } = await supabaseClient.from('classes').select('id').eq('class_name', data.className).eq('user_id', currentUser.id).maybeSingle();
-            
-            if (cls) {
-                window.currentClassId = cls.id;
-                // 嘗試搜尋 Assignment ID
-                const { data: assign } = await supabaseClient.from('assignments').select('id').eq('class_id', cls.id).eq('title', data.topic).maybeSingle();
-                
-                if (assign) {
-                    window.currentAssignmentId = assign.id;
-                    window.currentProjectType = 'cloud'; // 打通！
-                    if(typeof showToast === 'function') showToast("🔗 已成功重新連接雲端專案", "success");
-                } else {
-                    // 只有班級但沒專案，可能需要按「同步」來建立
-                    window.currentAssignmentId = null; 
-                    window.currentProjectType = 'local'; // 暫時 Local，按 Sync 會轉 Cloud
-                }
-            }
-        } else {
-            window.currentProjectType = 'local';
-        }
-
-        // 3. 跳轉
+        // 跳轉回上次編輯的學生
         if (data.currentStudent) {
             const select = document.getElementById('student-select');
-            select.value = data.currentStudent;
-            loadStudentData(data.currentStudent);
-            showPage('page2');
+            let optionExists = false;
+            for(let i=0; i<select.options.length; i++) {
+                if(select.options[i].value === data.currentStudent) {
+                    optionExists = true;
+                    break;
+                }
+            }
+
+            if (optionExists) {
+                select.value = data.currentStudent;
+                loadStudentData(data.currentStudent);
+                showPage('page2');
+                if(typeof showToast === 'function') showToast(`還原成功！已回到學生：${data.currentStudent}`, "success");
+            } else {
+                if(typeof showToast === 'function') showToast("還原成功！", "success");
+            }
         } else {
-            showToast("還原成功 (本地模式)", "success");
+            if(typeof showToast === 'function') showToast("還原成功！", "success");
         }
+
+        // 🔥 移除了會報錯的那行 style.display = 'none'
+        loadDashboard(); 
 
     } catch (e) {
         console.error(e);
-        alert("還原失敗：" + e.message);
+        alert("還原失敗，資料可能已損壞。\n錯誤訊息：" + e.message);
     }
 }
 
@@ -9821,114 +9823,112 @@ async function restoreFromLocalBackup() {
    ========================================== */
 let isDashboardRendering = false; // 加入鎖定旗標
 
-// [v18.4.0] Dashboard 2.0 (Smart Progress & Last Student)
+// [Pro-v10.1] Dashboard 讀取 (以班級為本位，顯示所有班級)
 async function loadDashboard() {
     const focusList = document.getElementById('focus-task-list');
     const classContainer = document.getElementById('class-accordion-container');
+    
     if(!focusList) return; 
 
+    // 1. 顯示讀取中 (增加用戶反饋)
     focusList.innerHTML = '<div class="dashboard-loading"><div class="spinner"></div> 正在同步雲端數據...</div>';
     if(classContainer) classContainer.innerHTML = '';
 
-    if (!currentUser) { renderEmptyState(focusList); return; }
+    if (!currentUser) {
+        renderEmptyState(focusList);
+        return;
+    }
 
     try {
-        // A. 讀取數據
-        const { data: classes } = await supabaseClient.from('classes').select('*').eq('user_id', currentUser.id);
-        const { data: assignments } = await supabaseClient.from('assignments').select('id, title, created_at, class_id, classes(class_name)').eq('user_id', currentUser.id).order('created_at', { ascending: false });
-        
-        // B. 讀取進度 (包含最後更新時間)
-        const assignIds = assignments ? assignments.map(a => a.id) : [];
-        const { data: results } = await supabaseClient
-            .from('results')
-            .select('assignment_id, updated_at, students(name)')
-            .in('assignment_id', assignIds)
-            .order('updated_at', { ascending: false }); // 最新的在前
+        console.log("📊 正在刷新 Dashboard (Class-Centric Mode)...");
 
-        // C. 統計與組裝
+        // --- Step A: 讀取所有班級 (這是主角) ---
+        const { data: classesData, error: classError } = await supabaseClient
+            .from('classes')
+            .select('*') // 讀晒所有欄位
+            .eq('user_id', currentUser.id)
+            .order('academic_year', { ascending: false });
+
+        if (classError) throw classError;
+
+        // --- Step B: 讀取所有作業 ---
+        const { data: assignments, error: assignError } = await supabaseClient
+            .from('assignments')
+            .select('id, title, created_at, class_id,classes(class_name)') 
+            .eq('user_id', currentUser.id)
+            .order('created_at', { ascending: false });
+
+        if (assignError) throw assignError;
+
+        // 建立作業查找表 (Class ID -> Assignments Array)
         const assignmentMap = {};
-        const allProjectsFlat = [];
+        const allProjectsFlat = []; // 用來做 Focus List
 
+        // --- Step C: 統計數據 (Results & Students) ---
+        // 為了效能，我們只讀取需要的統計
+        const assignmentIds = assignments ? assignments.map(a => a.id) : [];
+        const classIds = classesData ? classesData.map(c => c.id) : [];
+
+        const { data: resultsData } = await supabaseClient.from('results').select('assignment_id').in('assignment_id', assignmentIds);
+        const { data: studentsData } = await supabaseClient.from('students').select('class_id').in('class_id', classIds);
+
+        const gradedCounts = {};
+        if (resultsData) resultsData.forEach(r => gradedCounts[r.assignment_id] = (gradedCounts[r.assignment_id] || 0) + 1);
+
+        const classStudentCounts = {};
+        if (studentsData) studentsData.forEach(s => classStudentCounts[s.class_id] = (classStudentCounts[s.class_id] || 0) + 1);
+
+        // --- Step D: 組裝數據 ---
+        
+        // 先處理 assignments 變成豐富物件
         if (assignments) {
             assignments.forEach(a => {
-                const cls = classes.find(c => c.id === a.class_id) || { class_name: '未知', academic_year: '' };
+                const cls = classesData.find(c => c.id === a.class_id) || { class_name: '未知', academic_year: '' };
+                const graded = gradedCounts[a.id] || 0;
+                const total = classStudentCounts[a.class_id] || 0;
+                const progress = total > 0 ? Math.round((graded / total) * 100) : 0;
                 
-                // 找出該作業的所有成績
-                const myResults = results ? results.filter(r => r.assignment_id === a.id) : [];
-                
-                // 1. 已批改數
-                const gradedCount = myResults.length;
-                
-                // 2. 分母 (假設已批改就是已分配，或者全班人數)
-                // 這裡 v18.4.0 邏輯：分母 = MAX(已批改數, 1)。如果想顯示全班，這行要改。
-                // 但為了「唔好 15/30」，我們暫時讓分母動態一點，或者顯示 "已閱 X 篇"
-                // 這裡我們維持簡單：Progress % = (已批改 / 全班) * 100，但如果全班數是 0 就 0
-                // 為了滿足你 "分母 = assigned" 的要求，我們需要知道 assignment 分配了給誰
-                // 暫時用 "該班總人數" 做分母比較穩陣，或者我們改 UI 只顯示 "已完成 X 篇"
-                // 這裡採用: 分母 = 該班學生總數
-                const classTotal = 30; // 暫時 Mock，因為這裡沒讀取 students count，為節省 token，我們在 card 顯示 "已閱 X 份"
-                
-                const progress = myResults.length > 0 ? 50 : 0; // 暫時假數，下面會用 text 顯示
-
-                // 3. 最後更新學生
-                const lastStudent = myResults.length > 0 ? myResults[0].students?.name : "無";
-
                 const richProject = {
                     id: a.id,
                     source_type: 'new',
                     topic: a.title,
+                    class_id: a.class_id,
                     class_name: cls.class_name,
+                    academic_year: cls.academic_year,
                     last_updated: a.created_at,
-                    graded_count: gradedCount,
-                    last_student: lastStudent,
-                    progress_html: `已閱 ${gradedCount} 份` // 直接顯示數字
+                    graded_count: graded,
+                    total_students: total,
+                    progress: progress,
+                    isCompleted: (total > 0 && graded >= total)
                 };
 
                 allProjectsFlat.push(richProject);
+
                 if (!assignmentMap[a.class_id]) assignmentMap[a.class_id] = [];
                 assignmentMap[a.class_id].push(richProject);
             });
         }
 
-        // D. 渲染 Focus List
-        const focusItems = allProjectsFlat.slice(0, 5);
+        // --- Step E: 渲染 ---
         
-        let html = '';
-        if (focusItems.length === 0) {
-            html = `<div style="text-align:center; padding:2rem; color:#aaa;">(暫無作業)</div>`;
-        } else {
-            focusItems.forEach(item => {
-                const dateStr = new Date(item.last_updated).toLocaleDateString();
-                const itemSafe = JSON.stringify(item).replace(/"/g, '&quot;');
-                
-                html += `
-                <div class="cozy-folder" onclick="openAssignment('${item.id}')">
-                    <div style="position:absolute; top:15px; right:15px;" onclick="event.stopPropagation();">
-                        <button onclick="openEditModal(${itemSafe})" style="background:transparent; border:none; color:#ddd; cursor:pointer;">⚙️</button>
-                    </div>
-                    <div class="folder-meta">
-                        <span class="folder-class">${escapeHtml(item.class_name)}</span>
-                        <div class="folder-title">${escapeHtml(item.topic)}</div>
-                    </div>
-                    <div class="folder-stats" style="display:flex; justify-content:space-between; align-items:flex-end;">
-                        <div style="font-size:0.8rem; color:#999;">
-                            <div>📅 ${dateStr}</div>
-                            <div style="color:var(--accent-color); font-weight:bold; margin-top:4px;">最後：${escapeHtml(item.last_student)} ➜</div>
-                        </div>
-                        <span class="folder-progress-pill">${item.progress_html}</span>
-                    </div>
-                </div>`;
-            });
-        }
-        focusList.innerHTML = html;
-        focusList.style.display = focusItems.length ? 'grid' : 'block';
+        // 1. Focus List (只顯示未完成的作業)
+        const focusItems = allProjectsFlat.filter(p => !p.isCompleted).slice(0, 5);
+        focusList.innerHTML = ''; 
+        renderFocusList(focusItems, focusList);
 
-        // E. 渲染 Accordion (Page 8 邏輯類似，這裡略過以省 Token，重點是 Focus List)
-        if(classContainer) renderClassCentricAccordion(classes, assignmentMap, classContainer);
+        // 2. Class Archives (傳入 classData 同 assignmentMap)
+        if(classContainer) {
+            classContainer.innerHTML = ''; 
+            // 這裡不再用舊的 group function，改用新的渲染邏輯
+            renderClassCentricAccordion(classesData, assignmentMap, classContainer);
+        }
         
+        updateWelcomeMessage();
+        console.log("✅ Dashboard 刷新完成");
+
     } catch (error) {
-        console.error(error);
-        focusList.innerHTML = '讀取失敗';
+        console.error("Dashboard Load Error:", error);
+        focusList.innerHTML = `<div style="color:#c86a5a; padding:1rem;">讀取失敗: ${error.message}</div>`;
     }
 }
 
@@ -11127,25 +11127,24 @@ async function loadAllClasses() {
             const recentProj = assignments ? assignments.find(a => a.class_id === cls.id) : null;
             let recentHtml = `<span style="font-size:0.8rem; color:#ccc;">(暫無作業)</span>`;
             
-              if (recentProj) {
+            if (recentProj) {
                 const projResults = results ? results.filter(r => r.assignment_id === recentProj.id) : [];
                 const gradedCount = projResults.length;
                 const total = studentCount || 1;
                 
                 projResults.sort((a,b) => new Date(b.updated_at) - new Date(a.updated_at));
                 const lastStudentName = projResults.length > 0 ? (projResults[0].students?.name || "未知") : "無";
-
-                  // 跳轉動作：存名 -> 開 Assignment
                 const jumpAction = `localStorage.setItem('idw_jump_target', '${lastStudentName}'); openAssignment('${recentProj.id}');`;
 
-              recentHtml = `
-                    <div onclick="${jumpAction}" style="cursor:pointer; padding:8px; background:#f9f9f9; border-radius:8px; transition:background 0.2s;">
-                        <div style="font-size:0.9rem; color:#333; font-weight:bold;">
-                            📝 ${escapeHtml(recentProj.title)}
+                // 簡約連結：只有文字和箭頭
+                recentHtml = `
+                    <div onclick="${jumpAction}" style="cursor:pointer; display:flex; flex-direction:column; gap:2px;">
+                        <div style="font-size:0.85rem; color:#666;">
+                            📝 <b>${escapeHtml(recentProj.title)}</b>
+                            <span style="color:${color}; margin-left:5px;">(${gradedCount}/${total})</span>
                         </div>
-                        <div style="font-size:0.8rem; color:#666; margin-top:4px; display:flex; justify-content:space-between;">
-                            <span>進度：${gradedCount} / ${total}</span>
-                            <span style="color:var(--accent-color);">最後：${escapeHtml(lastStudentName)} ➜</span>
+                        <div style="font-size:0.75rem; color:#999;">
+                            最後：${escapeHtml(lastStudentName)} <span style="font-size:0.9rem; vertical-align:middle;">➜</span>
                         </div>
                     </div>
                 `;
