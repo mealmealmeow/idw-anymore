@@ -2734,15 +2734,114 @@ scroll-margin-top: 160px;
 
 
 
+/* ========================================= */
+/* === [v12.1] 終極 Header & UI 修復版 === */
+/* ========================================= */
+
+/* 1. Header 容器 (Desktop & Mobile 通用) */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center; /* 垂直置中 */
+  padding: 1rem 1.5rem;
+  background: var(--header-bg);
+  color: white;
+  position: relative;
+  z-index: 3000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* 2. 左邊區域 (標題 + 身份) */
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 85%; /* 留位俾右邊齒輪 */
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  line-height: 1.2;
+}
+
+/* 3. 登入資料膠囊 */
+.auth-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(255, 255, 255, 0.15);
+  padding: 4px 10px;
+  border-radius: 99px;
+  width: fit-content;
+}
+
+#auth-status {
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+#auth-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+/* 4. 右邊區域 (設定掣) */
+.header-right {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.font-control-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.25);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  transition: background 0.2s;
+}
+.font-control-btn:hover { background: rgba(255,255,255,0.4); }
+
+/* 5. 設定選單 (強制最頂層，解決遮擋) */
+.settings-menu-popover {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 60px rgba(0,0,0,0.3); /* 深陰影 */
+  border: 1px solid rgba(0,0,0,0.05);
+  width: 200px;
+  padding: 12px;
+  z-index: 2147483647 !important; /* 🔥 宇宙最高 */
+  color: #555;
+  text-align: left;
+}
+
+
+
+
 /* ========================================================================== */
-/* === [v18.2.4-Clean] 整合樣式區 (Header, Nav, Mobile, AI, Patches) === */
+/* === [v12.1-Final] 核心導航與介面樣式 (Header, Nav, Mobile, Settings) === */
 /* ========================================================================== */
 
 /* --- 1. Header (頂部欄) --- */
 header {
-  display: flex !important;
+  display: flex;
   justify-content: space-between;
-  align-items: center !important;
+  align-items: center; /* 垂直置中 */
   padding: 1rem 1.5rem;
   background: var(--header-bg);
   color: white;
@@ -2755,7 +2854,7 @@ header {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  max-width: 85%;
+  max-width: 85%; /* 留位俾右邊齒輪 */
 }
 
 header h1 {
@@ -2764,14 +2863,6 @@ header h1 {
   font-weight: 500;
   letter-spacing: 0.1em;
   line-height: 1.2;
-}
-
-.header-right {
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  gap: 12px !important;
-  position: relative !important; 
 }
 
 /* 登入資料膠囊 */
@@ -2795,6 +2886,8 @@ header h1 {
 
 #auth-buttons { display: flex; gap: 5px; }
 
+
+
 /* 設定按鈕 (齒輪) */
 .font-control-btn {
   width: 36px;
@@ -2812,35 +2905,18 @@ header h1 {
 }
 .font-control-btn:hover { background: rgba(255,255,255,0.4); }
 
-/* 書籤按鈕 (Header 嵌入版) */
-.header-book-btn {
-    display: none; /* 預設桌面隱藏 */
-    background: #fdfbf7; 
-    color: var(--accent-color);
-    border: 2px solid rgba(255,255,255,0.5);
-    width: 40px; height: 40px;
-    border-radius: 12px;
-    align-items: center; justify-content: center;
-    font-size: 1.3rem;
-    cursor: pointer;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    transition: transform 0.1s;
-}
-.header-book-btn:active { transform: scale(0.92); background: #fff; }
-
 /* --- 2. 設定選單 (Settings Popover) --- */
 .settings-menu-popover {
-  position: fixed !important; /* 強制 Fixed，脫離父層 */
-  top: 70px !important;
-  right: 30px !important;
-  left: auto !important;
+  position: absolute;
+  top: 50px;
+  right: 0;
   background: #fff;
   border-radius: 12px;
-  box-shadow: 0 10px 60px rgba(0,0,0,0.3) !important;
+  box-shadow: 0 10px 60px rgba(0,0,0,0.3); /* 深陰影 */
   border: 1px solid rgba(0,0,0,0.05);
   width: 200px;
   padding: 12px;
-  z-index: 2147483647 !important; /* 宇宙最高 */
+  z-index: 2147483647 !important; /* 🔥 宇宙最高 */
   color: #555;
   text-align: left;
 }
@@ -2889,32 +2965,22 @@ header h1 {
 }
 .nav-btn:hover { background-color: rgba(0,0,0,0.03); color: #555; }
 .nav-btn.active { color: var(--accent-color); background-color: var(--accent-color-soft); font-weight: bold; }
+.nav-btn::after { display: none; }
 
-/* 子導航 (懸浮島 - Desktop) */
-@keyframes floatDownCenterFixed {
-  from { opacity: 0; transform: translate(-50%, -10px); }
-  to { opacity: 1; transform: translate(-50%, 0); }
-}
-
+/* 子導航 (懸浮島) */
 .sub-nav-island {
   position: absolute;
-  top: 65px !important; 
-  left: 50% !important; 
-  transform: translateX(-50%) !important;
-  
-  background: rgba(255, 255, 255, 0.95); 
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(0,0,0,0.05); 
-  box-shadow: 0 8px 30px rgba(0,0,0,0.08);
-  
-  padding: 6px 8px; 
-  border-radius: 99px;
-  display: flex; gap: 5px; 
-  z-index: 1001; 
-  white-space: nowrap;
-  
-  /* 動畫 */
-  animation: floatDownCenterFixed 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
+  top: 65px; left: 50%; transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.5); box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+  padding: 6px 8px; border-radius: 99px;
+  display: flex; gap: 5px; z-index: 1001; white-space: nowrap;
+  animation: floatDown 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes floatDown {
+  from { opacity: 0; transform: translate(-50%, -10px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
 }
 
 .sub-nav-group { display: flex; gap: 5px; }
@@ -2930,55 +2996,14 @@ header h1 {
   box-shadow: 0 4px 10px rgba(90, 143, 123, 0.3);
 }
 
-/* --- 4. Back To Top 按鈕 --- */
-#back-to-top-btn {
-  display: none;
-  position: fixed !important;
-  bottom: 30px; right: 30px;
-  z-index: 2147483647;
-  width: 45px; height: 45px; border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.3); 
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  color: var(--accent-color);
-  cursor: pointer; font-size: 1.5rem; line-height: 1;
-  transition: all 0.3s ease; backdrop-filter: blur(4px);
-}
-#back-to-top-btn:hover {
-  background-color: var(--accent-color); color: white;
-  transform: translateY(-3px);
-  box-shadow: 0 4px 15px rgba(90, 143, 123, 0.3);
-}
 
-/* --- 5. Pop-up & Modal 修復 --- */
-.pop-footer {
-    display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;
-}
-.pop-btn {
-    white-space: nowrap !important;
-    height: auto !important;
-    min-height: 44px;
-    line-height: 1.3 !important;
-    text-align: center;
-    font-size: 0.9rem !important;
-    padding: 8px 16px !important;
-    min-width: auto !important;
-}
-#pop-generic-input-container {
-    max-height: 50vh; overflow-y: auto; border: 1px solid #eee;
-    border-radius: 8px; padding: 5px; margin-bottom: 15px; background: #fafafa;
-}
 
-/* --- 6. 響應式佈局 (Mobile & Desktop) --- */
-
-/* Desktop AI 頁面：左大右小 */
-@media (min-width: 900px) {
-    .ai-page-grid { grid-template-columns: 1.6fr 1fr !important; }
-}
-
-/* 手機版 (Mobile) */
+/* ========================================= */
+/* === [v12.2] Mobile RWD (終極修復版) === */
+/* ========================================= */
 @media (max-width: 768px) {
   
-  /* Header: 左對齊 + 垂直排列 */
+  /* 1. Header: 左對齊 */
   header {
     padding: 15px 20px !important;
     gap: 12px !important;
@@ -2995,37 +3020,86 @@ header h1 {
   .auth-container {
     margin: 0 !important;
     justify-content: flex-start !important;
-    max-width: 75%;
+    max-width: 75%; /* 留位俾右邊 Setting 掣 */
   }
   
-  /* Header Right: 絕對定位在右上 */
+  /* Setting 掣：拍埋膠囊右邊 */
   .header-right {
     position: absolute !important;
     top: auto !important;
     bottom: 18px !important; /* 對齊膠囊 */
     right: 20px !important;
-    display: flex !important;
+    display: block !important;
   }
   
-  /* Setting Menu: 靠右 */
+  /* Setting 選單位置修正 (唔好飛去最右，唔好遮字) */
   .settings-menu-popover {
-    right: 0 !important; left: auto !important;
-    top: 45px !important; width: 180px !important;
+    right: 0 !important; 
+    left: auto !important;
+    top: 45px !important;
+    width: 180px !important;
   }
 
-  /* 顯示手機版書籤按鈕 */
-  .header-book-btn { display: flex; }
+  /* 2. 導航 Nav: 修正迫埋一邊問題 */
+  .main-nav {
+    justify-content: space-between !important; /* 平均分佈 */
+    width: 100%;
+    overflow-x: auto;
+    padding: 0 10px;
+  }
+ /* [v12.7-MobileNav-TextFix] 手機版導航：隱藏文字，Icon 居中 */
+  .nav-btn {
+    flex: 1;
+    justify-content: center; /* 強制置中 */
+    padding: 8px 0;
+    display: flex; /* 確保 Flex 生效 */
+  }
 
-  /* 導航欄 Nav */
-  .page-nav-wrapper { display: none !important; } /* 使用書籤目錄取代 */
+  /* 隱藏文字 span */
+  .nav-btn .nav-text {
+    display: none !important;
+  }
 
-  /* 子導航 (如果仍有顯示) */
+  /* 放大 Icon 並移除間距 */
+  .nav-btn .nav-icon {
+    font-size: 1.5rem; 
+    margin: 0 !important;
+  }
+
+  /* 子導航: 橫滑 + 置中 */
   .sub-nav-island {
-    position: static; transform: none !important; animation: none !important;
-    width: 100%; border-radius: 0; background: #fcfcfc; padding: 12px 0;
-    justify-content: center !important; left: 0 !important;
+    position: static;
+    transform: none;
+    width: 100%;
+    border-radius: 0;
+    background: #fcfcfc;
+    padding: 12px 0;
+    
+    /* 🔥 關鍵：使用 Flex 令其置中 */
+    display: flex;
+    justify-content: center; 
+    gap: 8px;
+  }
+  
+  /* 修正子選單按鈕 */
+  .sub-nav-btn {
+    border: 1px solid #eee;
+    background: #fff;
+    font-size: 0.85rem;
+    padding: 6px 14px;
+    border-radius: 99px;
+    flex-shrink: 0;
+  }
+  
+  .sub-nav-btn.active {
+    background: var(--accent-color);
+    color: #fff;
+    box-shadow: 0 2px 5px rgba(90,143,123,0.3);
   }
 
+  /* 3. 通用修正 */
+  .font-control-btn { width: 36px !important; height: 36px !important; }
+  
   /* 表格卡片化 */
   #student-overview-table-wrapper { width: 100% !important; border: none !important; box-shadow: none !important; }
   #student-overview-table, #student-overview-table tbody, #student-overview-table tr, #student-overview-table td { display: block !important; width: 100% !important; }
@@ -3034,7 +3108,6 @@ header h1 {
   #student-overview-table td { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed #eee; text-align: right; }
   #student-overview-table td:last-child { border-bottom: none; }
   #student-overview-table td::before { content: attr(data-label-fix); font-weight: bold; color: var(--accent-color); text-align: left; margin-right: 10px; }
-  
   /* 補回欄位名稱 */
   #student-overview-table td:nth-of-type(1)::before { content: "學號"; }
   #student-overview-table td:nth-of-type(2)::before { content: "姓名"; }
@@ -3046,27 +3119,774 @@ header h1 {
   #student-overview-table td:nth-of-type(8)::before { content: "總分"; }
   #student-overview-table td:nth-of-type(9)::before { content: "評語"; }
   #student-overview-table td:nth-of-type(10) { display: none; }
+}
+
+/* ========================================= */
+/* === [v12.2] 唯一 Back To Top 樣式 (已修復) === */
+/* ========================================= */
+#back-to-top-btn {
+  display: none; /* JS 控制顯示 */
+  position: fixed !important; /* 強制脫離文檔流，浮在視窗之上 */
+  bottom: 30px;
+  right: 30px;
+  z-index: 2147483647; /* 宇宙最高，確保唔會被遮 */
   
-  /* Textarea 修復 */
-  #student-overview-table textarea {
-      width: 100% !important;
-      box-sizing: border-box !important;
-      white-space: pre-wrap !important;
-      word-break: break-word !important;
-  }
-  #student-overview-table td:nth-of-type(9) {
-      flex-direction: column; align-items: flex-start;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  
+  /* 極致透明風格 */
+  background-color: rgba(255, 255, 255, 0.3); 
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  color: var(--accent-color); /* 綠色箭嘴 */
+  
+  cursor: pointer;
+  font-size: 1.5rem; /* 箭嘴大粒啲 */
+  line-height: 1;
+  
+  /* 柔和過渡 */
+  transition: all 0.3s ease;
+  backdrop-filter: blur(4px); /* 磨砂效果 */
+}
+
+/* Hover 時才變實色，方便點擊 */
+#back-to-top-btn:hover {
+  background-color: var(--accent-color);
+  color: white;
+  transform: translateY(-3px);
+  box-shadow: 0 4px 15px rgba(90, 143, 123, 0.3);
+}
+/* [v12.1] Hotfix: 解決遮擋與跳動 */
+
+/* 1. 電腦版 Setting 選單 (強制脫離父容器) */
+@media (min-width: 769px) {
+    .settings-menu-popover {
+        position: fixed !important; /* 由 absolute 改為 fixed */
+        top: 70px !important;       /* 固定在 Header 下方 */
+        right: 30px !important;     /* 靠右 */
+        left: auto !important;
+        z-index: 2147483647 !important; /* 宇宙最高 */
+        /* 確保唔會受 Header 的 overflow:hidden 影響 */
+    }
+}
+
+/* 2. 手機版導航 (預設隱藏，JS 載入後顯示，防止閃左邊) */
+.sub-nav-island {
+    opacity: 0; 
+    animation: fadeInNav 0.3s ease forwards; /* 載入時淡入 */
+}
+
+@keyframes fadeInNav {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* [v12.8-MobileNav-DisplayFix] 手機版強制置中 (修復首頁灰條問題) */
+@media (max-width: 768px) {
+    .sub-nav-island {
+        justify-content: center !important; /* 強制置中 */
+        /* 🔥 關鍵修正：移除 display: flex !important; */
+        /* 讓 JS 決定幾時顯示 (flex) 幾時隱藏 (none) */
+    }
+}
+
+
+/* =================================================== */
+/* === [v12.5] 終極樣式補丁 (Header, Nav, TopBtn) === */
+/* =================================================== */
+
+/* 1. Back To Top (強制懸浮右下角) */
+#back-to-top-btn {
+  display: none; /* JS 控制 */
+  position: fixed !important;
+  bottom: 30px;
+  right: 30px;
+  z-index: 2147483647;
+  width: 45px; height: 45px; border-radius: 50%;
+  background-color: rgba(90, 143, 123, 0.3); /* 半透明綠 */
+  color: #fff; border: none; cursor: pointer; font-size: 1.4rem;
+  backdrop-filter: blur(4px); transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+#back-to-top-btn:hover {
+  background-color: var(--accent-color); opacity: 1; transform: translateY(-3px);
+}
+
+/* 2. 電腦版 Setting 選單 (防止被遮) */
+.settings-menu-popover {
+  position: fixed !important;
+  top: 70px !important; right: 30px !important; left: auto !important;
+  z-index: 2147483647 !important;
+  box-shadow: 0 10px 60px rgba(0,0,0,0.3) !important;
+}
+
+/* 3. 導航懸浮島 (電腦版置中修正) */
+.sub-nav-island {
+  position: absolute;
+  top: 65px; left: 50%; transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
+  border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+  padding: 6px 8px; border-radius: 99px;
+  display: flex; gap: 5px; z-index: 1001; white-space: nowrap;
+  /* 使用 JS 顯示時會自動套用 Flex，無需動畫以免移位 */
+}
+
+
+
+/* ========================================= */
+/* === [v12.6] 導航置中強力修正 (Hammer Fix) === */
+/* ========================================= */
+
+/* 1. 定義一個「絕對置中」的動畫 (必須包含 translate -50%) */
+/* 之前歪咗係因為動畫入面冇包含 -50%，所以一郁就走位 */
+@keyframes floatDownCenterFixed {
+  from { opacity: 0; transform: translate(-50%, -10px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* 2. 電腦版懸浮島 (強制應用置中動畫) */
+@media (min-width: 769px) {
+  .sub-nav-island {
+    left: 50% !important;
+    transform: translateX(-50%) !important; /* 靜止狀態：置中 */
+    
+    /* 🔥 關鍵：動畫狀態也要置中 */
+    animation: floatDownCenterFixed 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
+    
+    /* 鎖死其他可能影響定位嘅屬性 */
+    margin: 0 !important;
+    right: auto !important;
+    top: 65px !important;
   }
 }
 
-/* 7. 進度條 */
-.task-progress { width: 100%; margin-top: 10px; }
-.task-progress-bar-bg { width: 100%; height: 6px; background: #eee; border-radius: 99px; overflow:hidden; }
-.task-progress-bar-fill { height: 100%; background: var(--accent-color); border-radius: 99px; }
+/* 3. 手機版防禦 (確保唔會受影響) */
+@media (max-width: 768px) {
+  .sub-nav-island {
+    transform: none !important;
+    left: 0 !important;
+    animation: none !important; /* 手機唔要動畫，費事閃 */
+    opacity: 1 !important;
+    justify-content: center !important;
+  }
+}
+/* ====================================================== */
+/* [最終修正 CSS] 漢堡包選單樣式 (Mobile Hamburger Menu) */
+/* 作用：將分頁欄變成右上角彈出 Menu */
+/* ====================================================== */
 
-/* 8. 預設隱藏 Page Content (防閃爍) */
-.page-content { display: none !important; }
-.page-content.active { display: block !important; }
+/* 1. 漢堡包按鈕樣式 (固定在右上角) */
+#mobile-menu-btn {
+    position: fixed;
+    top: 15px;      
+    right: 15px;    
+    z-index: 10001; 
+    
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    
+    width: 42px; height: 42px; 
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 20px;
+    color: #444;
+    
+    /* 預設隱藏，由 JS 控制顯示/隱藏 */
+    display: none; 
+    align-items: center; justify-content: center;
+}
+
+/* 2. 手機版：改造分頁欄 (變成彈出式 Menu) */
+@media screen and (max-width: 768px) {
+    
+    /* 預設強制隱藏分頁欄，交由 JS 控制的 .show-menu 嚟打開 */
+    #sub-nav-container {
+        display: none !important; 
+        
+        /* 彈出選單樣式 */
+        position: fixed !important;
+        top: 65px;      
+        right: 15px;    
+        z-index: 10000;
+        
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        padding: 8px;
+        
+        /* 排版：直排 */
+        flex-direction: column !important;
+        width: 150px !important; 
+        gap: 5px !important;
+    }
+
+    /* 只有當 JS 加上 .show-menu class 先至顯示 */
+    #sub-nav-container.show-menu {
+        display: flex !important;
+        animation: slideIn 0.2s ease-out;
+    }
+    
+    /* 按鈕樣式調整 */
+    .sub-nav-btn {
+        width: 100% !important; 
+        text-align: left !important; 
+        padding: 10px 12px !important;
+        font-size: 14px !important;
+        border-radius: 6px !important;
+        background: transparent !important;
+        margin: 0 !important;
+    }
+    
+    /* 動畫效果 */
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+}
+
+/* ========================================= */
+/* === [Edition: 書 v13.1] Frosted UI === */
+/* ========================================= */
+
+#mobile-book-trigger, #mobile-book-overlay { display: none; }
+/* 1. 書籤按鈕：移至 Header (隱藏原本底部的) */
+#mobile-book-trigger { display: none !important; }
+
+/* 2. 手機版書籤掣 (實色高對比版) */
+.header-book-btn {
+    display: none;
+    /* 🔥 改用實心奶白色，對比 Header 的綠色 */
+    background: #fdfbf7; 
+    color: var(--accent-color); /* 圖案用深綠色 */
+    border: 2px solid rgba(255,255,255,0.5); /* 加個光暈邊框 */
+    width: 40px;
+    height: 40px;
+    border-radius: 12px; /* 圓角方塊，似 App Icon */
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    margin-right: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15); /* 浮起感 */
+    transition: transform 0.1s;
+}
+
+@media (max-width: 768px) {
+    .header-book-btn { display: flex; }
+    
+    /* 讓 Header 右邊寬鬆啲 */
+    .header-right { gap: 8px; }
+}
+
+.header-book-btn:active {
+    transform: scale(0.92);
+    background: #fff;
+}
+
+@media (max-width: 768px) {
+    /* 2. 手機版進度表文字溢出修復 */
+    #student-overview-table textarea {
+        width: 100% !important;
+        box-sizing: border-box !important; /* 關鍵：防止 padding 撐爆 */
+        white-space: pre-wrap !important;  /* 允許換行 */
+        word-break: break-word !important; /* 長字自動斷行 */
+    }
+    #student-overview-table td {
+        overflow: hidden; /* 防止撐爆 TD */
+    }
+}
+
+
+@media (max-width: 768px) {
+    /* 1. 隱藏舊 Header Nav */
+    .page-nav-wrapper { display: none !important; }
+
+  /* [Edition v13.2] 玻璃書籤按鈕 (Glass Bookmark) */
+    #mobile-book-trigger {
+        /* 定位 (保持不變) */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        bottom: 25px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        z-index: 2000;
+        cursor: pointer;
+
+        /* ✨ 玻璃擬態 (Glassmorphism) 核心設定 ✨ */
+        background: rgba(255, 255, 255, 0.65); /* 極淡奶白，高透明度 */
+        backdrop-filter: blur(12px);           /* 強力磨砂，模糊背後內容 */
+        -webkit-backdrop-filter: blur(12px);   /* Safari 支援 */
+        border: 1px solid rgba(255, 255, 255, 0.8); /* 亮白邊框，扮玻璃邊緣 */
+        
+        /* 形狀與陰影 */
+        border-radius: 18px; /* 圓潤方塊，似一塊小玻璃磚 */
+        box-shadow: 
+            0 4px 6px rgba(0, 0, 0, 0.05),  /* 貼身陰影 */
+            0 10px 25px rgba(0, 0, 0, 0.1); /* 擴散陰影，營造浮起感 */
+        
+        /* 文字與 Icon 顏色 (深灰綠，要在淺底上夠清楚) */
+        color: #3d5c4f; 
+        transition: all 0.3s ease;
+    }
+
+    /* 按下去的微互動 */
+    #mobile-book-trigger:active {
+        transform: scale(0.95);
+        background: rgba(255, 255, 255, 0.85); /* 按下變實色少少 */
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 🔥 3. 解決重疊：強制推高「批改頁」的浮動導航列 */
+    /* 這是 Page 2 原有的工具列，我們讓它浮在書籤上方 */
+    #floating-nav {
+        bottom: 95px !important; /* 原本是 25px，現在推高到 95px，避開書籤 */
+        right: 20px !important;
+        left: auto !important;
+        transform: none !important; /* 移除原本的置中變換 */
+        
+        /* 變為垂直排列，慳位 */
+        flex-direction: column !important;
+        background: rgba(255, 255, 255, 0.85) !important;
+        padding: 8px !important;
+        width: auto !important;
+        border-radius: 99px !important;
+    }
+
+    /* Back to Top 掣也要推高 */
+    #back-to-top-btn {
+        bottom: 100px !important; 
+        right: 80px !important; /* 放在左邊一點，避免撞車 */
+    }
+
+    /* 4. 全螢幕磨砂目錄 (Overlay) */
+    #mobile-book-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        
+        /* ✨ 核心美化：半透明奶白色 + 磨砂特效 */
+        background: rgba(253, 251, 247, 0.85); 
+        backdrop-filter: blur(12px); /* 磨砂玻璃感 */
+        -webkit-backdrop-filter: blur(12px); /* Safari 支援 */
+        
+        z-index: 3001;
+        display: flex;
+        flex-direction: column;
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.3s ease;
+        padding: 20px 25px;
+        overflow-y: auto;
+    }
+
+    #mobile-book-overlay.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    /* 標題美化 */
+    .book-menu-title {
+        text-align: center;
+        color: #5b5044;
+        font-size: 1.4rem;
+        font-weight: 500;
+        margin-top: 20px;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(0,0,0,0.08); /* 極淡邊框 */
+        letter-spacing: 3px;
+    }
+
+    /* 列表項目美化 */
+    .book-main-item {
+        font-size: 1.2rem;
+        color: #5b5044;
+        padding: 18px 10px;
+        border-bottom: 1px dashed rgba(0,0,0,0.05); /* 更淡的虛線 */
+        transition: background 0.2s;
+        border-radius: 8px;
+    }
+    
+    .book-main-item:active {
+        background: rgba(255, 255, 255, 0.5);
+    }
+
+    /* 展開時的效果 */
+    .book-main-item.expanded .book-main-header {
+        color: var(--accent-color);
+        font-weight: 600;
+    }
+
+    /* 箭嘴 */
+    .book-arrow {
+        opacity: 0.4;
+        font-size: 0.7rem;
+    }
+
+    /* 子選單區域 */
+    .book-sub-list {
+        background: rgba(255, 255, 255, 0.4); /* 極淡白底 */
+        border-radius: 12px;
+        margin-top: 5px;
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.02); /* 內陰影增加凹陷感 */
+    }
+
+    .book-sub-item {
+        padding: 14px 15px 14px 50px;
+        font-size: 0.95rem;
+        color: #777;
+        position: relative;
+    }
+    
+    /* 子選單前面的小圓點 */
+    .book-sub-item::before {
+        content: "";
+        position: absolute;
+        left: 30px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4px;
+        height: 4px;
+        background: #ccc;
+        border-radius: 50%;
+    }
+    
+    .book-sub-item:active {
+        color: var(--accent-color);
+        background: rgba(255,255,255,0.8);
+    }
+    .book-sub-item:active::before {
+        background: var(--accent-color);
+    }
+    
+    /* 關閉按鈕 */
+    .book-close-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 40px; 
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(0,0,0,0.05);
+        border: none;
+        color: #888;
+        font-size: 1.2rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+/* === [v11.0] AI 頁面美化 (Cozy & Clean) === */
+
+/* 1. 桌面版雙欄佈局 (左邊設定，右邊操作) */
+@media (min-width: 900px) {
+    .ai-page-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.2fr; /* 左窄右闊 */
+        gap: 30px;
+        align-items: start;
+    }
+}
+
+/* 2. 魔法卡片 (取代原本沈悶的框框) */
+.ai-magic-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 25px;
+    box-shadow: 0 8px 20px rgba(90, 143, 123, 0.08); /* 淡淡的綠色光暈 */
+    border: 1px solid rgba(0,0,0,0.03);
+    position: relative;
+    overflow: hidden;
+}
+
+/* 裝飾用的咖啡圖案背景 (隨意，增加氣氛) */
+.ai-magic-card::before {
+    content: "☕️";
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    font-size: 5rem;
+    opacity: 0.05;
+    pointer-events: none;
+}
+
+/* 3. 步驟標題 */
+.ai-step-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--title-color);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 4. 隱藏式技術細節 (<details>) */
+.tech-details {
+    margin-top: 15px;
+    border-top: 1px dashed #eee;
+    padding-top: 10px;
+}
+.tech-details summary {
+    font-size: 0.85rem;
+    color: #aaa;
+    cursor: pointer;
+    list-style: none; /* 隱藏預設箭嘴 */
+}
+.tech-details summary:hover {
+    color: var(--accent-color);
+}
+.tech-textarea {
+    width: 100%;
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: #666;
+    background: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+/* 5. 溫暖的提示文字 */
+.cozy-hint {
+    font-size: 0.9rem;
+    color: #8c867a;
+    line-height: 1.6;
+    background: #fcfaf6;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    border-left: 4px solid var(--accent-color);
+}
+/* ========================================= */
+/* === [v11.3] UI 微調 (Toast & Hint) === */
+/* ========================================= */
+
+/* 1. 修復 Pop-up (Toast) 手機顯示問題 */
+.toast-notification {
+    white-space: normal !important; /* 關鍵：允許文字換行 */
+    max-width: 85vw !important;     /* 限制最大寬度為螢幕 85% */
+    width: auto !important;
+    height: auto !important;
+    
+    /* 排版調整 */
+    display: flex !important;
+    align-items: flex-start !important; /* Icon 與文字頂部對齊 */
+    text-align: left !important;        /* 文字靠左，閱讀較舒服 */
+    padding: 12px 16px !important;
+    line-height: 1.5 !important;
+    
+    /* 位置微調 (避免遮擋頂部太多) */
+    top: 30px !important; 
+}
+
+/* 2. 重製 Cozy Hint (去除 Quote 樣式) */
+.cozy-hint {
+    /* 移除原本的左邊粗線 */
+    border-left: none !important;
+    
+    /* 改用極淡的「便條紙」風格 */
+    background-color: rgba(255, 255, 255, 0.6); /* 半透明白底 */
+    border: 1px dashed #d1e2d9; /* 極淡的綠色虛線框 */
+    border-radius: 12px;
+    padding: 15px 18px;
+    
+    /* 文字設定 */
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    
+    /* 彈性佈局，讓 Icon 在左邊 */
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+/* 利用偽元素加一個可愛 Icon，不需改 HTML */
+.cozy-hint::before {
+    content: "💡"; /* 燈泡或者 ✨ */
+    font-size: 1.1rem;
+    flex-shrink: 0; /* 固定大小，不會被壓扁 */
+    margin-top: 2px; /* 微調對齊 */
+}
+
+/* 1. Header 設定掣微調 (融入 Auth Group) */
+#auth-buttons .font-control-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
+    border: none;
+    background: transparent;
+    color: rgba(255,255,255,0.8);
+    margin-left: 5px;
+    box-shadow: none;
+}
+#auth-buttons .font-control-btn:hover {
+    color: #fff;
+    transform: rotate(30deg);
+}
+/* ========================================= */
+/* === [v19.3] 雜誌風報告 (Magazine A4) === */
+/* ========================================= */
+
+#print-container { display: none; }
+
+@media print {
+    body > :not(#print-container) { display: none !important; }
+    #print-container { display: block !important; }
+    @page {
+        size: A4 portrait;
+        margin: 0; /* 無邊距列印，由 CSS 控制內距 */
+    }
+}
+
+.report-page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto;
+    background: #fff;
+    /* 恢復舒適的字體大小 */
+    font-size: 12pt; 
+    font-family: "LXGW WenKai TC", serif;
+    color: #444;
+    position: relative;
+    page-break-after: always;
+    
+    /* 雜誌風內距 */
+    padding: 20mm; 
+    box-sizing: border-box;
+}
+
+/* 裝飾性邊框 (像證書) */
+.report-page::before {
+    content: "";
+    position: absolute;
+    top: 10mm; left: 10mm; right: 10mm; bottom: 10mm;
+    border: 1px solid #ddd;
+    pointer-events: none;
+}
+
+/* 頁頭：極簡大氣 */
+.report-header {
+    margin-bottom: 30px;
+    border-bottom: 2px solid #5A8F7B; /* 主題色線條 */
+    padding-bottom: 15px;
+    position: relative;
+}
+
+.report-title-block h1 {
+    font-size: 24pt;
+    font-weight: normal; /* 文青風通常不用太粗 */
+    color: #2c3e50;
+    margin: 0;
+    letter-spacing: 2px;
+}
+
+.report-sub-title {
+    font-size: 14pt;
+    color: #5A8F7B;
+    margin-top: 8px;
+    font-weight: bold;
+}
+
+.report-meta-grid {
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 20px;
+    position: absolute;
+    right: 0;
+    bottom: 15px;
+    text-align: right;
+    font-size: 10pt;
+    color: #888;
+    font-family: sans-serif;
+}
+
+/* 歷程圖區域 */
+.chart-section {
+    margin-bottom: 30px;
+    height: 200px; /* 固定高度 */
+    width: 100%;
+    border: 1px dashed #eee; /* 輕盈的框 */
+    border-radius: 8px;
+    padding: 10px;
+    box-sizing: border-box;
+    background: #fafafa;
+}
+
+/* 分數表 (簡約風格) */
+.score-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+}
+.score-table th {
+    text-align: left;
+    color: #999;
+    font-weight: normal;
+    font-size: 10pt;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #eee;
+}
+.score-table td {
+    padding: 10px 0;
+    font-size: 13pt;
+    border-bottom: 1px solid #f9f9f9;
+}
+.score-table .total-row td {
+    font-weight: bold;
+    color: #5A8F7B;
+    font-size: 16pt;
+    border-bottom: none;
+    padding-top: 15px;
+}
+
+/* 評語區 (雜誌專欄感) */
+.comment-section {
+    margin-top: 20px;
+}
+.comment-label {
+    background: #2c3e50;
+    color: #fff;
+    padding: 4px 12px;
+    font-size: 11pt;
+    display: inline-block;
+    margin-bottom: 15px;
+    letter-spacing: 1px;
+}
+.comment-content {
+    line-height: 1.8; /* 增加行距，閱讀感更佳 */
+    text-align: justify;
+    font-size: 12pt;
+    white-space: pre-wrap;
+}
+
+/* 頁尾 */
+.report-footer {
+    position: absolute;
+    bottom: 14mm;
+    left: 20mm; right: 20mm;
+    text-align: center;
+    font-size: 9pt;
+    color: #ccc;
+    border-top: 1px solid #f5f5f5;
+    padding-top: 5px;
+}
+/* [v18.1.1] Modal Layering Fix */
+/* 確保通用彈窗 (編輯/刪除確認) 永遠在管理名單之上 */
+#pop-generic-modal { z-index: 2147483650 !important; }
+#pop-manage-students-modal { z-index: 2147483640 !important; }
+/* 確保通用彈窗的底色更深一點，區分層次 */
+#pop-generic-modal .pop-modal { box-shadow: 0 25px 80px rgba(0,0,0,0.5); }
+</style>
 
 </head>
 <body>
@@ -4077,7 +4897,17 @@ header h1 {
 </div>
 
 
+<!-- ... (這是原本的重設密碼 Modal) ... -->
+<div id="pop-reset-password-modal" class="pop-overlay">
+  <!-- ... 略 ... -->
+    <div class="pop-footer">
+    <!-- 確保 onclick 指向我們的新函數 -->
+<button class="pop-btn pop-btn-confirm" id="confirm-reset-btn" onclick="confirmResetPassword()">確認修改</button>
+    </div>
+  </div>
+</div>
 
+<!-- ✅✅✅ 請將新代碼貼在這裡 (兩者中間) ✅✅✅ -->
 
 <!-- 學生個人成長圖表 Modal -->
 <div id="pop-student-history-modal" class="pop-overlay">
@@ -5437,6 +6267,18 @@ function toggleSettingsMenu() {
     }
 }
 
+// 點擊空白處關閉 (保持不變，但確保能抓到 fixed 元素)
+document.addEventListener('click', (e) => {
+    const menu = document.getElementById('settings-dropdown');
+    const btn = document.querySelector('.font-control-btn');
+    
+    // 檢查是否點擊了 Menu 內部或按鈕
+    if (menu && menu.style.display === 'block') {
+        if (!menu.contains(e.target) && !btn.contains(e.target)) {
+            menu.style.display = 'none';
+        }
+    }
+});
 
 // 視窗縮放時關閉 Menu (防止位置錯亂)
 window.addEventListener('resize', () => {
@@ -6446,11 +7288,12 @@ async function saveCurrentStudentData(mode = 'cloud') {
       }
       
       // 更新總覽表記憶體 (但不強制重繪整個表格以免閃爍)
-       renderStudentOverviewTable(); 
+      renderStudentOverviewTable(); 
       isDataDirty = false; // 標記為已乾淨
       updateUIBasedOnAuthState();
+      
       // 自動跳轉
-    
+      setTimeout(() => scrollToSection(new Event('dummy'), 'student-select'), 100);
   }
 }
 
