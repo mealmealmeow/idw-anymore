@@ -4172,7 +4172,7 @@ header h1 {
 </div>
     
     <div class="input-group" id="project-switcher-container" style="display:none; background:#f0f4c3; padding:10px; border-radius:8px; border:1px dashed #c0ca33; margin-bottom:15px;">
-        <label style="font-size:0.9rem;">🚀 切換至同班其他作業 (Auto-Save)</label>
+        <label style="color:#827717; font-size:0.9rem;">🚀 切換至同班其他作業 (Auto-Save)</label>
         <select id="project-switcher" onchange="switchProject(this.value)" style="border-color:#c0ca33; background:#fff;">
             <option value="">(讀取中...)</option>
         </select>
@@ -4191,8 +4191,8 @@ header h1 {
 
     <!-- 下面是操作區 -->
     <div class="btn-group" style="margin-bottom: 1rem;">
-   
-        <!-- [v19.2] 快速班級管理按鈕 -->
+        <!-- 保留 Excel 匯入功能給 Page 2 直接使用 -->
+        
 <button class="light-btn" onclick="showPage('page8')" style="margin-left: 5px;">
     🏫 管理班級
 </button>
@@ -5996,45 +5996,40 @@ function attachGlobalListeners() {
 
 /* ===== [v10.3] 雙層導航邏輯 ===== */
 
-/* ========================================= */
-/* === [v10.6] 導航與核心顯示邏輯 (JS) === */
-/* ========================================= */
-
-// [v11.0] 導航邏輯 (無漢堡版)
+// [v18.0] Step 1: 路由守衛 (請用這段完整覆蓋舊的 switchMainTab)
 function switchMainTab(target) {
-// [v18.0] Step 1: Route Guard (路由守衛)
-    // 如果嘗試進入 page2，但沒有 currentAssignmentId，強制踢回 page1
+    // 1. 門禁檢查：如果想去 page2 (批改頁)，但沒有 Project ID
     if (target === 'page2') {
         if (!window.currentAssignmentId) {
-            // 使用 alert 提醒，或直接無聲跳轉
             alert("⚠️ 請先在首頁「選擇」或「建立」一個作業 (Project)！");
-            showPage('page1'); // 強制返回首頁
-            return; // ⛔ 終止執行，不准進入 Page 2
+            
+            // 強制彈回 Page 1，並停止執行
+            showPage('page1'); 
+            // 同步更新導航按鈕狀態
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.nav-btn[onclick*="page1"]').classList.add('active');
+            return; 
         }
     }
-    // A. 更新 Main Nav 狀態
-    document.querySelectorAll('.main-nav .nav-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.target === target);
-    });
 
-    // B. 隱藏所有 Sub Group
-    document.querySelectorAll('.sub-nav-group').forEach(grp => {
-        grp.style.display = 'none';
-    });
+    // 2. 正常的頁面切換邏輯
+    document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+    const t = document.getElementById(target);
+    if (t) t.classList.add('active');
+
+    // 3. 更新導航按鈕外觀
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    // 嘗試透過 onclick 屬性找按鈕 (兼容舊版寫法)
+    const activeBtn = document.querySelector(`.nav-btn[onclick*="'${target}'"]`);
+    if (activeBtn) activeBtn.classList.add('active');
     
-    // C. 顯示 Sub Nav Container (懸浮島)
-    const container = document.getElementById('sub-nav-container');
-    
-    if (target === 'home') {
-        showPage('page-home'); 
-        container.style.display = 'none'; // 首頁無需懸浮島
-    } else {
-        container.style.display = 'flex'; // 顯示懸浮島
-        const subGroup = document.getElementById('sub-nav-' + target);
-        if (subGroup) {
-            subGroup.style.display = 'flex'; // 顯示對應按鈕
-        }
+    // 4. 特殊邏輯：進入 Page 8 時自動讀取班級
+    if (target === 'page8') {
+        if (typeof loadAllClasses === 'function') loadAllClasses();
     }
+
+    // 5. 滾動回頂部
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // showPage 保持 v10.6 版本即可，它已經兼容這種父子結構
@@ -10654,155 +10649,63 @@ function closeManageStudentsModal() {
     loadAllClasses(); // 刷新外面的卡片，更新「學生人數」
 }
 
-// ==========================================
-// ====== [v18.0] Step 1: Page 8 學生管理核心 ======
-// ==========================================
-
-// 1. 載入並渲染學生名單 (含編輯功能)
-// 請將此函式用來取代舊有的 loadMasterStudentList()
-async function loadMasterStudentList_v18(classId) {
-    const listContainer = document.getElementById('master-student-list'); // 確保你的 HTML 有這個 ID
-    if (!listContainer) return console.error("找不到 master-student-list 容器");
-
-    listContainer.innerHTML = '<div class="dashboard-loading"><div class="spinner"></div> 載入名單中...</div>';
+// [Pro-v9.0] Page 8 學生名單 (加入成長歷程按鈕)
+async function loadMasterStudentList(classId) {
+    const listContainer = document.getElementById('master-student-list');
+    listContainer.innerHTML = '<div style="text-align:center; color:#999; padding:10px;">讀取中...</div>';
 
     try {
-        // 抓取學生資料，按學號排序
-        // 假設資料庫欄位是: id, number, name
         const { data: students, error } = await supabaseClient
             .from('students')
             .select('*')
-            .eq('class_id', classId)
-            // 嘗試將 number 轉為數字排序 (如果 number 是字串這可能會有點問題，暫時用升序)
-            .order('number', { ascending: true });
+            .eq('class_id', classId);
 
         if (error) throw error;
 
-        if (!students || students.length === 0) {
-            listContainer.innerHTML = '<div class="empty-state">此班級尚未加入學生</div>';
+        if (students.length === 0) {
+            listContainer.innerHTML = `<div style="text-align:center; color:#ccc; padding:20px;">
+                暫無學生。<br>請點擊上方「匯入 Excel」或手動新增。
+            </div>`;
             return;
         }
 
-        let html = '<ul class="student-admin-list" style="list-style:none; padding:0;">';
-        
-        students.forEach(s => {
-            html += `
-            <li id="stu-row-${s.id}" style="
-                background: #fff; 
-                margin-bottom: 8px; 
-                padding: 12px; 
-                border-radius: 10px; 
-                border: 1px solid #eee;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-            ">
-                <div class="view-mode" id="view-${s.id}" style="display:flex; align-items:center; gap:10px; width:100%;">
-                    <span style="
-                        background:#eee; 
-                        padding:2px 8px; 
-                        border-radius:4px; 
-                        font-family:monospace; 
-                        font-weight:bold; 
-                        min-width:30px; 
-                        text-align:center;">${escapeHtml(s.number)}</span>
-                    <span style="font-weight:500; font-size:1.05rem;">${escapeHtml(s.name)}</span>
-                    
-                    <div style="margin-left:auto; display:flex; gap:5px;">
-                        <button onclick="toggleStudentEdit('${s.id}', true)" class="icon-btn" style="border:none; background:none; cursor:pointer; opacity:0.6; font-size:1.1rem;" title="編輯資料 (保留紀錄)">✏️</button>
-                        <button onclick="deleteStudentStrict('${s.id}', '${escapeHtml(s.name)}')" class="icon-btn" style="border:none; background:none; cursor:pointer; opacity:0.6; color:#c86a5a; font-size:1.1rem;" title="永久刪除">🗑️</button>
-                    </div>
-                </div>
-
-                <div class="edit-mode" id="edit-${s.id}" style="display:none; width:100%; align-items:center; gap:8px;">
-                    <input type="text" id="input-num-${s.id}" value="${escapeHtml(s.number)}" style="width:50px; padding:5px; border:1px solid #ccc; border-radius:4px; text-align:center;" placeholder="號">
-                    <input type="text" id="input-name-${s.id}" value="${escapeHtml(s.name)}" style="flex:1; padding:5px; border:1px solid #ccc; border-radius:4px;" placeholder="姓名">
-                    
-                    <button onclick="saveStudentEdit('${s.id}')" style="border:none; background:#5A8F7B; color:white; border-radius:4px; padding:5px 10px; cursor:pointer;">✅</button>
-                    <button onclick="toggleStudentEdit('${s.id}', false)" style="border:none; background:#eee; color:#666; border-radius:4px; padding:5px 10px; cursor:pointer;">❌</button>
-                </div>
-            </li>
-            `;
+        // 自然排序 (1, 2, 10)
+        const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+        students.sort((a, b) => {
+            const numA = (a.student_number || '').toString();
+            const numB = (b.student_number || '').toString();
+            const numResult = collator.compare(numA, numB);
+            if (numResult !== 0) return numResult;
+            return collator.compare(a.name || '', b.name || '');
         });
-        html += '</ul>';
+
+        // 渲染列表 (加入 📈 按鈕)
+        let html = '<table style="width:100%; border-collapse:collapse; font-size:0.9rem;">';
+        students.forEach(s => {
+            let displayNum = s.student_number;
+            if (displayNum && /^\d$/.test(displayNum)) displayNum = '0' + displayNum;
+            const safeName = escapeHtml(s.name);
+            const safeId = s.id;
+
+            html += `
+            <tr style="border-bottom:1px dashed #eee;">
+                <td style="padding:8px; width:50px; font-weight:bold; color:#5A8F7B;">${escapeHtml(displayNum || '-')}</td>
+                <td style="padding:8px; display:flex; align-items:center; gap:8px;">
+                    ${safeName}
+                    <!-- 🔥 新增：成長歷程按鈕 -->
+                    <button class="light-btn" style="padding:2px 6px; font-size:0.8rem;" onclick="showStudentHistory('${safeId}', '${safeName}')" title="查看 ${safeName} 的成長歷程">📈</button>
+                </td>
+                <td style="padding:8px; text-align:right;">
+                    <button class="danger-btn" style="padding:2px 8px; font-size:0.75rem;" onclick="deleteStudentFromMaster('${safeId}')">刪除</button>
+                </td>
+            </tr>`;
+        });
+        html += '</table>';
         listContainer.innerHTML = html;
 
-    } catch (err) {
-        console.error(err);
-        listContainer.innerHTML = `<div style="color:red;">載入失敗: ${err.message}</div>`;
-    }
-}
-
-// 2. 切換編輯模式
-function toggleStudentEdit(studentId, isEditing) {
-    const viewEl = document.getElementById(`view-${studentId}`);
-    const editEl = document.getElementById(`edit-${studentId}`);
-    if (viewEl && editEl) {
-        viewEl.style.display = isEditing ? 'none' : 'flex';
-        editEl.style.display = isEditing ? 'flex' : 'none';
-    }
-}
-
-// 3. 儲存編輯 (UPDATE logic) - 這是保護 UUID 的關鍵！
-async function saveStudentEdit(studentId) {
-    const newNum = document.getElementById(`input-num-${studentId}`).value.trim();
-    const newName = document.getElementById(`input-name-${studentId}`).value.trim();
-
-    if (!newNum || !newName) {
-        alert("學號和姓名不能為空！");
-        return;
-    }
-
-    try {
-        // 更新資料庫
-        const { error } = await supabaseClient
-            .from('students')
-            .update({ 
-                number: newNum, 
-                name: newName 
-            })
-            .eq('id', studentId);
-
-        if (error) throw error;
-
-        // 成功後，重新載入列表 (為了簡單起見，直接重刷)
-        // 這裡需要知道當前的 classId，你可以從 DOM 獲取
-        const currentClassId = document.getElementById('manage-class-id')?.value; 
-        if(currentClassId) loadMasterStudentList_v18(currentClassId);
-
-    } catch (err) {
-        alert("更新失敗：" + err.message);
-    }
-}
-
-// 4. 嚴格刪除 (Strict Delete)
-async function deleteStudentStrict(studentId, studentName) {
-    // 嚴肅的警告訊息
-    const confirmed = confirm(
-        `⚠️ 危險警告 ⚠️\n\n` +
-        `您確定要刪除學生「${studentName}」嗎？\n\n` +
-        `❌ 此動作將會永久移除該學生的【所有歷史成績與評語】！\n` +
-        `❌ 資料刪除後無法復原！\n\n` +
-        `💡 如果只是打錯字，請按「取消」並使用「✏️ 編輯」功能。`
-    );
-
-    if (!confirmed) return;
-
-    try {
-        const { error } = await supabaseClient
-            .from('students')
-            .delete()
-            .eq('id', studentId);
-
-        if (error) throw error;
-
-        // 刷新介面
-        const row = document.getElementById(`stu-row-${studentId}`);
-        if (row) row.remove(); // 視覺上直接移除，不用重刷整個列表
-        
-    } catch (err) {
-        alert("刪除失敗：" + err.message);
+    } catch (error) {
+        console.error(error);
+        listContainer.innerHTML = `<div style="color:red;">讀取錯誤：${error.message}</div>`;
     }
 }
 
@@ -12863,7 +12766,152 @@ function formatReportComment(text) {
     }).join('<br>');
 }
 
+// ==========================================
+// ====== [v18.0] Step 1: 班級管理核心升級 ======
+// ==========================================
 
+// 1. 載入並渲染學生名單 (含編輯功能)
+// 此函式會自動覆蓋舊有的 loadMasterStudentList
+async function loadMasterStudentList(classId) {
+    const listContainer = document.getElementById('master-student-list');
+    if (!listContainer) return; // 如果找不到容器就不做
+
+    listContainer.innerHTML = '<div class="dashboard-loading"><div class="spinner"></div> 載入名單中...</div>';
+
+    try {
+        // 抓取學生資料，按學號排序
+        const { data: students, error } = await supabaseClient
+            .from('students')
+            .select('*')
+            .eq('class_id', classId)
+            .order('number', { ascending: true }); // 暫時用字串排序
+
+        if (error) throw error;
+
+        if (!students || students.length === 0) {
+            listContainer.innerHTML = '<div class="empty-state">此班級尚未加入學生</div>';
+            return;
+        }
+
+        let html = '<ul class="student-admin-list" style="list-style:none; padding:0;">';
+        
+        students.forEach(s => {
+            // 確保 null 值顯示為空字串
+            const sNum = s.number || '';
+            const sName = s.name || '';
+
+            html += `
+            <li id="stu-row-${s.id}" style="
+                background: #fff; 
+                margin-bottom: 8px; 
+                padding: 12px; 
+                border-radius: 10px; 
+                border: 1px solid #eee;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            ">
+                <div class="view-mode" id="view-${s.id}" style="display:flex; align-items:center; gap:10px; width:100%;">
+                    <span style="
+                        background:#eee; 
+                        padding:2px 8px; 
+                        border-radius:4px; 
+                        font-family:monospace; 
+                        font-weight:bold; 
+                        min-width:30px; 
+                        text-align:center;">${escapeHtml(sNum)}</span>
+                    <span style="font-weight:500; font-size:1.05rem;">${escapeHtml(sName)}</span>
+                    
+                    <div style="margin-left:auto; display:flex; gap:5px;">
+                        <button onclick="toggleStudentEdit('${s.id}', true)" class="icon-btn" style="border:none; background:none; cursor:pointer; opacity:0.6; font-size:1.1rem;" title="編輯資料 (保留紀錄)">✏️</button>
+                        <button onclick="deleteStudentStrict('${s.id}', '${escapeHtml(sName)}')" class="icon-btn" style="border:none; background:none; cursor:pointer; opacity:0.6; color:#c86a5a; font-size:1.1rem;" title="永久刪除">🗑️</button>
+                    </div>
+                </div>
+
+                <div class="edit-mode" id="edit-${s.id}" style="display:none; width:100%; align-items:center; gap:8px;">
+                    <input type="text" id="input-num-${s.id}" value="${escapeHtml(sNum)}" style="width:50px; padding:5px; border:1px solid #ccc; border-radius:4px; text-align:center;" placeholder="號">
+                    <input type="text" id="input-name-${s.id}" value="${escapeHtml(sName)}" style="flex:1; padding:5px; border:1px solid #ccc; border-radius:4px;" placeholder="姓名">
+                    
+                    <button onclick="saveStudentEdit('${s.id}')" style="border:none; background:#5A8F7B; color:white; border-radius:4px; padding:5px 10px; cursor:pointer;">✅</button>
+                    <button onclick="toggleStudentEdit('${s.id}', false)" style="border:none; background:#eee; color:#666; border-radius:4px; padding:5px 10px; cursor:pointer;">❌</button>
+                </div>
+            </li>
+            `;
+        });
+        html += '</ul>';
+        listContainer.innerHTML = html;
+
+    } catch (err) {
+        console.error(err);
+        listContainer.innerHTML = `<div style="color:red;">載入失敗: ${err.message}</div>`;
+    }
+}
+
+// 2. 切換編輯模式
+function toggleStudentEdit(studentId, isEditing) {
+    const viewEl = document.getElementById(`view-${studentId}`);
+    const editEl = document.getElementById(`edit-${studentId}`);
+    if (viewEl && editEl) {
+        viewEl.style.display = isEditing ? 'none' : 'flex';
+        editEl.style.display = isEditing ? 'flex' : 'none';
+    }
+}
+
+// 3. 儲存編輯 (UPDATE logic) - 保護 UUID
+async function saveStudentEdit(studentId) {
+    const newNum = document.getElementById(`input-num-${studentId}`).value.trim();
+    const newName = document.getElementById(`input-name-${studentId}`).value.trim();
+
+    if (!newNum || !newName) {
+        alert("學號和姓名不能為空！");
+        return;
+    }
+
+    try {
+        const { error } = await supabaseClient
+            .from('students')
+            .update({ number: newNum, name: newName })
+            .eq('id', studentId);
+
+        if (error) throw error;
+
+        // 成功後重刷列表
+        const currentClassId = document.getElementById('manage-class-id')?.value; 
+        if(currentClassId) loadMasterStudentList(currentClassId);
+
+    } catch (err) {
+        alert("更新失敗：" + err.message);
+    }
+}
+
+// 4. 嚴格刪除 (Strict Delete)
+async function deleteStudentStrict(studentId, studentName) {
+    const confirmed = confirm(
+        `⚠️ 危險警告 ⚠️\n\n` +
+        `您確定要刪除學生「${studentName}」嗎？\n\n` +
+        `❌ 此動作將會永久移除該學生的【所有歷史成績與評語】！\n` +
+        `❌ 資料刪除後無法復原！\n\n` +
+        `💡 如果只是打錯字，請按「取消」並使用「✏️ 編輯」功能。`
+    );
+
+    if (!confirmed) return;
+
+    try {
+        const { error } = await supabaseClient
+            .from('students')
+            .delete()
+            .eq('id', studentId);
+
+        if (error) throw error;
+
+        const row = document.getElementById(`stu-row-${studentId}`);
+        if (row) row.remove();
+        
+    } catch (err) {
+        alert("刪除失敗：" + err.message);
+    }
+}
 
 </script> <!-- 呢個係原本全個檔案唯一的結尾，保留佢 -->
 
