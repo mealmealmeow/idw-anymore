@@ -3762,67 +3762,47 @@ header h1 {
 /* 1. 平時隱藏列印容器 */
 #print-container { display: none; }
 
-/* [v19.6] PDF 列印暴力修復 (Hammer Fix) */
+/* [v19.7] PDF 列印修復 (核彈級 :not 選擇器) */
 @media print {
-    /* 1. 隱藏所有非列印介面 */
-    .main-container, 
-    .sticky-top-bar, 
-    header, 
-    nav, 
-    .pop-overlay, 
-    #back-to-top-btn, 
-    #mobile-menu-btn,
-    #mobile-book-trigger,
-    #toast-container {
+    /* 1. 隱藏 Body 下除了 print-container 以外的所有東西 */
+    body > :not(#print-container) {
         display: none !important;
-        visibility: hidden !important;
-        height: 0 !important;
-        width: 0 !important;
-        overflow: hidden !important;
     }
 
-    /* 2. 設定 Body 背景 */
-    body, html {
-        background-color: #fff !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        height: 100% !important;
-        overflow: visible !important;
-    }
-
-    /* 3. 強制顯示列印容器 */
+    /* 2. 顯示並重置列印容器 */
     #print-container {
         display: block !important;
-        visibility: visible !important;
-        position: relative !important; /* 改回 relative 讓它自然流動 */
-        width: 100% !important;
-        height: auto !important;
+        position: relative !important;
         top: 0 !important;
         left: 0 !important;
-        z-index: 99999 !important;
-        background: white !important;
+        width: 100% !important;
+        height: auto !important;
         margin: 0 !important;
+        padding: 0 !important;
+        background-color: white !important;
+        z-index: 99999 !important;
+        visibility: visible !important;
     }
 
-    /* 4. 確保內容可見 */
+    /* 3. 確保容器內的內容可見 */
     #print-container * {
         visibility: visible !important;
-        display: block; /* 確保 block 元素正常換行 */
+        -webkit-print-color-adjust: exact !important; /* 強制列印背景色 */
+        print-color-adjust: exact !important;
     }
-    
-    /* 5. 表格與彈性佈局修正 */
-    .score-table, .score-table tbody, .score-table tr, .score-table td {
-        display: table !important; /* 表格要維持表格屬性 */
-    }
-    .score-table tr { display: table-row !important; }
-    .score-table td, .score-table th { display: table-cell !important; }
-    
-    .report-meta-grid { display: grid !important; } /* Grid 要維持 Grid */
 
-    /* 6. 頁面設定 */
+    /* 4. 重置頁面屬性 */
+    html, body {
+        height: auto !important;
+        overflow: visible !important;
+        background: #fff !important;
+        margin: 0 !important; 
+    }
+
+    /* 5. 頁面邊距設定 */
     @page {
         size: A4 portrait;
-        margin: 0;
+        margin: 0mm; /* 由 CSS padding 控制內距 */
     }
 }
 
@@ -6939,22 +6919,18 @@ function calculateTotalScore() {
   return total;
 }
 
-// [v19.6] Checkbox 邏輯重寫 (DOM 遍歷版)
+// [v19.7] Checkbox 邏輯 (確保展開與填充)
 function handleCheckboxChange(checkbox, doUpdate = true) {
   const isChecked = checkbox.checked;
-  
-  // 1. 找到父層卡片 (Card)
   const checkItem = checkbox.closest('.check-item');
-  if (!checkItem) {
-      console.warn("找不到父層 .check-item");
-      return;
-  }
+  
+  if (!checkItem) return;
 
-  // 2. 找到內部的下拉選單區與編輯區
+  // 1. 獲取目標元素
   const interactiveModule = checkItem.querySelector('.interactive-module');
   const editableComment = checkItem.querySelector('.editable-comment');
 
-  // 3. 切換顯示狀態 (強制 block/none)
+  // 2. 執行顯示/隱藏
   if (interactiveModule) {
       interactiveModule.style.display = isChecked ? 'block' : 'none';
   }
@@ -6962,20 +6938,18 @@ function handleCheckboxChange(checkbox, doUpdate = true) {
   if (editableComment) {
       editableComment.style.display = isChecked ? 'block' : 'none';
       
-      // 4. 🔥 內容自動填充邏輯
+      // 3. 內容填充邏輯
       if (isChecked) {
           const textarea = editableComment.querySelector('textarea');
-          if (textarea) {
-              // 如果裡面無字，或者只是空殼，就填入預設內容
-              if (!textarea.value || textarea.value.trim() === '') {
-                  // 獲取 Checkbox ID 來生成內容
-                  textarea.value = composeStudentFromConcise(checkbox.id);
-              }
+          // 如果 Textarea 存在且是空的，填入預設內容
+          if (textarea && !textarea.value.trim()) {
+              // 根據 checkbox ID 獲取內容 (需配合 composeStudentFromConcise)
+              textarea.value = composeStudentFromConcise(checkbox.id);
           }
       }
   }
 
-  // 5. 更新總評語
+  // 4. 更新總輸出
   if (doUpdate) updateAllOutputs();
 }
 
@@ -8457,7 +8431,7 @@ function handleManualEdit(which) {
   if (ta) ta.dataset.userEditing = '1';
 }
 
-// [v19.6] 清空功能 (強制隱藏 Details)
+// [v19.7] 清空功能 (強制隱藏所有展開的編輯框)
 function clearAllCore(doUpdate = true) {
   // 1. 清空一般輸入框
   document.getElementById('unique-comment').value = '';
@@ -8467,30 +8441,31 @@ function clearAllCore(doUpdate = true) {
   currentTypos = [];
   renderTypoList();
   
-  // 3. 🔥 重置 Checkbox 與 隱藏 Details
+  // 3. 🔥 強制處理 Checkbox 與 編輯框
+  // A. 取消所有勾選
   document.querySelectorAll('#checklist-container input[type="checkbox"]').forEach(cb => { 
     cb.checked = false; 
-    // 呼叫剛剛修復的 handleCheckboxChange 來隱藏 details
-    handleCheckboxChange(cb, false); 
   });
 
-  // 4. 雙重保險：強制清空並隱藏所有編輯框
+  // B. 🔥 暴力隱藏所有「下拉選單區」
+  document.querySelectorAll('.interactive-module').forEach(div => {
+      div.style.display = 'none';
+      // 順手重置裡面的選單
+      div.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
+      div.querySelectorAll('input').forEach(i => i.value = '');
+  });
+
+  // C. 🔥 暴力隱藏所有「編輯框 (Textarea)」
   document.querySelectorAll('.editable-comment').forEach(div => {
       div.style.display = 'none';
       const ta = div.querySelector('textarea');
-      if(ta) ta.value = '';
-  });
-  
-  document.querySelectorAll('.interactive-module').forEach(div => {
-      div.style.display = 'none';
-      div.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
-      div.querySelectorAll('input[type="text"]').forEach(i => i.value = '');
+      if(ta) ta.value = ''; // 清空內容
   });
 
-  // 5. 清空常見錯別字勾選
+  // 4. 清空常見錯別字勾選
   document.querySelectorAll('#typo-saved-list input[type="checkbox"]').forEach(cb => cb.checked = false);
   
-  // 6. 更新輸出
+  // 5. 更新輸出 (清空總評語)
   if (doUpdate) {
     renderCommonTyposCheckedState();
     updateAllOutputs();
@@ -13169,10 +13144,21 @@ document.addEventListener('DOMContentLoaded', () => {
 /* === [v19.3] 報告引擎 (歷程圖 + 雜誌風) === */
 /* ========================================= */
 
-// [v19.5] 報告生成引擎 (無動畫圖表 + 延遲列印)
+// [v19.7] 報告生成 (確保容器位置正確)
 async function printReport(mode) {
-    const container = document.getElementById('print-container');
-    if (!container) return;
+    let container = document.getElementById('print-container');
+    
+    // 🔥 關鍵修正：確保 print-container 存在且位於 body 的最底層
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'print-container';
+        document.body.appendChild(container);
+    } else {
+        // 如果它被包在其他 div 裡面，把它搬出來
+        if (container.parentNode !== document.body) {
+            document.body.appendChild(container);
+        }
+    }
 
     if (typeof showToast === 'function') showToast("📊 正在準備列印格式...", "info");
 
@@ -13181,7 +13167,7 @@ async function printReport(mode) {
         await saveCurrentStudentData('cloud_silent');
     }
 
-    // 2. 篩選目標學生
+    // 2. 篩選目標
     let targets = [];
     if (mode === 'single') {
         const currentName = document.getElementById('student-select').value;
@@ -13210,7 +13196,6 @@ async function printReport(mode) {
         const comment = d.pureStudentComment || d.studentComment || "（暫無評語）";
         const canvasId = `history-chart-${i}`;
 
-        // 讀取歷史
         let historyData = [];
         if (student.dbId) {
             const { data: hist } = await supabaseClient
@@ -13286,8 +13271,7 @@ async function printReport(mode) {
         }
     }
 
-    // 4. 繪製圖表 (關閉動畫)
-    // 使用 requestAnimationFrame 確保 DOM 已更新
+    // 4. 繪製圖表 & 列印
     requestAnimationFrame(() => {
         chartsToRender.forEach(c => {
             const ctx = document.getElementById(c.id).getContext('2d');
@@ -13311,8 +13295,7 @@ async function printReport(mode) {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    // 🔥 核心修正：關閉動畫，確保列印時圖表已畫好
-                    animation: false, 
+                    animation: false,
                     scales: {
                         y: { beginAtZero: true, suggestedMax: 100, grid: { color: '#eee' } },
                         x: { grid: { display: false } }
@@ -13325,7 +13308,6 @@ async function printReport(mode) {
             });
         });
 
-        // 5. 喚醒列印 (稍微延遲，確保 Canvas 渲染完成)
         setTimeout(() => {
             window.print();
         }, 500);
