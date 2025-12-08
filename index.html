@@ -21,33 +21,33 @@
 
 <style>
 /* ========================================= */
-/* === 1. 全域變數與基礎設定 (Root & Base) === */
+/* === [全局變數定義] === */
 /* ========================================= */
 :root {
-    --primary-bg: #f7f3eb; /* 溫潤米白偏灰 */
-    --secondary-bg: #fcfaf6; /* 卡片背景 */
-    --text-color: #5b5044; /* 深啡灰 */
-    --border-color: #e1d8c8; /* 淺亞麻色 */
-    --accent-color: #5A8F7B; /* 主題色 - 沉靜灰綠 */
+    --primary-bg: #f7f3eb; /* 主背景色 - 溫潤米白偏灰 */
+    --secondary-bg: #fcfaf6; /* 卡片背景 - 柔和奶油白 */
+    --text-color: #5b5044; /* 主要文字 - 深啡灰 */
+    --border-color: #e1d8c8; /* 邊框色 - 淺亞麻色 */
+    --accent-color: #5A8F7B; /* 主題色/強調色 - 沉靜灰綠 */
     --accent-color-soft: #cfe3d9;
-    --title-color: #3d5c4f;
-    --header-bg: linear-gradient(120deg, #5A8F7B, #93b8a5);
-    --nav-bg: #f1ece4;
-    --nav-active-bg: #5A8F7B;
-    --nav-active-color: #fff;
-    --problem-color: #c86a5a; /* 磚紅 */
-    --excellent-color: #7a9e78; /* 橄欖綠 */
-    --copy-success-bg: #5f9f80;
+    --title-color: #3d5c4f; /* 標題色 - 深灰綠 */
+    --header-bg: linear-gradient(120deg, #5A8F7B, #93b8a5); /* 頁首背景漸層 */
+    --nav-bg: #f1ece4; /* 導航背景 - 亞麻色 */
+    --nav-active-bg: #5A8F7B; /* 導航啟用背景 - 主題色 */
+    --nav-active-color: #fff; /* 導航啟用文字 - 白色 */
+    --problem-color: #c86a5a; /* 問題/待改進 - 柔和磚紅 */
+    --excellent-color: #7a9e78; /* 優點/佳作 - 沉穩橄欖綠 */
+    --copy-success-bg: #5f9f80; /* 複製成功 - 稍亮綠色 */
     --modal-bg: rgba(0,0,0,0.28);
     --modal-card-bg: #fffdf8;
-    --shadow-color: rgba(52, 43, 32, 0.10);
-    --btn-brown-bg: #a18b73;
+    --shadow-color: rgba(52, 43, 32, 0.10); /* 陰影顏色 */
+    --btn-brown-bg: #a18b73; /* 啡色按鈕背景 */
     --btn-brown-hover: #8f7a63;
-    --dashed-box-bg: #f9fbff;
-    --empty-state-bg: #f7f2ea;
-    --empty-state-text: #93897a;
-    --missing-bg: #fff0f0;
-    --missing-text: #c86a5a;
+    --dashed-box-bg: #f9fbff; /* 虛線框背景色 */
+    --empty-state-bg: #f7f2ea; /* 空狀態背景色 */
+    --empty-state-text: #93897a; /* 空狀態文字顏色 */
+    --missing-bg: #fff0f0; /* 未填寫學生背景色 - 淡粉紅 */
+    --missing-text: #c86a5a; /* 未填寫學生文字顏色 */
     --danger-bg-soft: #fef2f2;
     --danger-border-soft: #fecaca;
 
@@ -58,98 +58,659 @@
     --transition-normal: 0.25s ease-out;
 }
 
-html { scroll-behavior: smooth; font-size: 16px; }
+html {
+    scroll-behavior: smooth;
+    font-size: 16px;
+}
+
 body {
     font-family: 'LXGW WenKai TC', -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
     line-height: 1.7;
     letter-spacing: 0.04em;
     background: radial-gradient(circle at top left, #faf3e4, #f5f3ef 55%, #f1f5f4);
     color: var(--text-color);
-    margin: 0; padding: 0; font-size: 1rem;
+    margin: 0;
+    padding: 0;
+    font-size: 1rem;
 }
 
 /* ========================================= */
-/* === 2. 頁首 Header & 專案資訊按鈕 === */
+/* === [Header & 專案資訊按鈕 (你的新需求)] === */
 /* ========================================= */
-header {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 1rem 1.5rem; background: var(--header-bg); color: white;
-    position: relative; z-index: 3000;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+
+/* ✅ 新增：專案資訊按鈕樣式 (圓角膠囊 + 可點擊) */
+.project-header-info {
+    /* 位置 */
+    margin-top: 0.6rem;
+    align-self: flex-start;
+
+    /* 形狀與顏色 (跟番 Header 其他按鈕風格) */
+    background-color: rgba(0, 0, 0, 0.15); /* 深色半透明底 */
+    border: 1px solid rgba(255, 255, 255, 0.3); /* 淺色邊框 */
+    border-radius: 999px; /* 圓角膠囊形 */
+    padding: 0.4rem 1rem;
+
+    /* 字體 */
+    font-size: 0.95rem;
+    color: #ffffff;
+
+    /* 排版 */
+    display: inline-flex;
+    gap: 0.6rem;
+    align-items: center;
+    backdrop-filter: blur(4px);
+
+    /* 互動感 (變成按鈕的關鍵) */
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none; /* 防止選取文字 */
 }
-header h1 {
-    margin: 0; font-size: 1.8rem; font-weight: 500;
-    letter-spacing: 0.1em; line-height: 1.2;
+
+/* 滑鼠指住時的效果 */
+.project-header-info:hover {
+    background-color: rgba(0, 0, 0, 0.3); /* 變深色 */
+    transform: translateY(-1px); /* 輕微浮起 */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    border-color: rgba(255, 255, 255, 0.6);
+}
+
+/* 按下去時的效果 */
+.project-header-info:active {
+    transform: translateY(0);
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+.project-header-info span {
+    display: inline-block;
+    white-space: nowrap;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#ph-class {
+    font-weight: bold;
+    color: #fff;
+}
+
+.project-header-info .ph-divider {
+    opacity: 0.5;
+    margin: 0 2px;
+}
+
+/* Header 基礎排版 */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center; /* 垂直置中 */
+    padding: 1rem 1.5rem;
+    background: var(--header-bg);
+    color: white;
+    position: relative;
+    z-index: 3000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .header-left {
-    display: flex; flex-direction: column; gap: 6px; max-width: 85%;
-}
-.header-right {
-    position: relative; display: flex; align-items: center; gap: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 85%; /* 留位俾右邊齒輪 */
 }
 
-/* ✅ 專案資訊按鈕樣式 (圓角膠囊 + 可點擊) */
-.project-header-info {
-    margin-top: 0.6rem; align-self: flex-start;
-    background-color: rgba(0, 0, 0, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 999px;
-    padding: 0.4rem 1rem;
-    font-size: 0.95rem; color: #ffffff;
-    display: inline-flex; gap: 0.6rem; align-items: center;
-    backdrop-filter: blur(4px);
-    cursor: pointer; transition: all 0.2s ease;
-    user-select: none;
+header h1 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    line-height: 1.2;
 }
-.project-header-info:hover {
-    background-color: rgba(0, 0, 0, 0.3); transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15); border-color: rgba(255, 255, 255, 0.6);
-}
-.project-header-info:active {
-    transform: translateY(0); background-color: rgba(0, 0, 0, 0.4);
-}
-.project-header-info span {
-    display: inline-block; white-space: nowrap; max-width: 300px;
-    overflow: hidden; text-overflow: ellipsis;
-}
-.project-header-info .ph-divider { opacity: 0.5; margin: 0 2px; }
-#ph-class { font-weight: bold; color: #fff; }
 
-/* 登入狀態膠囊 */
+/* 登入資料膠囊 */
 .auth-container {
-    display: inline-flex; align-items: center; gap: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     background-color: rgba(255, 255, 255, 0.15);
-    padding: 4px 10px; border-radius: 99px; width: fit-content;
+    padding: 4px 10px;
+    border-radius: 999px;
+    width: fit-content;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.25);
 }
+
 #auth-status {
-    font-size: 0.8rem; white-space: nowrap; overflow: hidden;
-    text-overflow: ellipsis; max-width: 200px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
 }
-#auth-buttons { display: flex; gap: 5px; }
 
-/* 字體與設定按鈕 */
+#auth-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+/* 設定掣 (齒輪) */
 .font-control-btn {
-    width: 36px; height: 36px; border-radius: 50%; border: none;
-    background: rgba(255,255,255,0.25); color: #fff; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.2rem; transition: background 0.2s;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.25);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    transition: background 0.2s;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.15);
 }
-.font-control-btn:hover { background: rgba(255,255,255,0.4); }
-
-/* 書籤按鈕 (Mobile Only) */
-.header-book-btn {
-    display: none; background: #fdfbf7; color: var(--accent-color);
-    border: 2px solid rgba(255,255,255,0.5); width: 40px; height: 40px;
-    border-radius: 12px; align-items: center; justify-content: center;
-    font-size: 1.3rem; margin-right: 12px; cursor: pointer;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15); transition: transform 0.1s;
+.font-control-btn:hover {
+    background: rgba(255,255,255,0.4);
+    transform: translateY(-1px);
 }
-.header-book-btn:active { transform: scale(0.92); background: #fff; }
 
 /* ========================================= */
-/* === 3. 導航列 Navigation === */
+/* === [Pro-v7.5] Pop Art 彈窗樣式 (修復版) === */
 /* ========================================= */
+
+/* 1. 底紙 (Overlay) */
+.pop-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%; height: 100%;
+    background: rgba(105, 129, 118, 0.6);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2147483647; /* 確保在最上層 */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+.pop-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* 2. 彈窗本體 (Modal) */
+.pop-modal {
+    background: #ffffff;
+    width: 90%;
+    max-width: 460px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    border: 4px solid #F2C037; /* Pop Art 黃色粗框 */
+    padding: 24px;
+    text-align: center;
+    color: #4a4a4a;
+    transform: scale(0.9);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+}
+
+.pop-overlay.active .pop-modal {
+    transform: scale(1);
+}
+
+/* 3. 彈窗內部元件 */
+.pop-icon {
+    font-size: 36px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.pop-modal h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.4rem;
+    color: #333;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.pop-desc {
+    font-size: 0.95rem;
+    color: #666;
+    margin-bottom: 15px;
+    line-height: 1.5;
+    flex-shrink: 0;
+}
+
+.pop-scroll-area {
+    text-align: left;
+    background: #fffdf5;
+    border-radius: 12px;
+    padding: 10px;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 100px;
+    margin-bottom: 20px;
+    border: 2px solid #eee;
+}
+
+/* 修正「載入預設評語」Pop-up 排版 */
+.pop-list-item {
+    display: flex !important;
+    align-items: center !important;
+    text-align: left !important;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 8px;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 8px;
+}
+.pop-list-item input[type="checkbox"] {
+    margin-right: 10px !important;
+    flex-shrink: 0;
+    width: 1.2rem;
+    height: 1.2rem;
+}
+.pop-list-item:hover {
+    background-color: #fcf4d6;
+    color: #333;
+}
+
+/* 輸入框 */
+.pop-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    font-size: 16px;
+    outline: none;
+    text-align: left;
+    transition: border-color 0.3s;
+    font-family: inherit;
+    margin-bottom: 15px;
+    display: block;
+}
+.pop-input:focus {
+    border-color: #F2C037;
+    background-color: #fffdf8;
+}
+
+/* 按鈕區域 */
+.pop-footer {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: auto;
+    flex-shrink: 0;
+}
+
+.pop-btn {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 99px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: inherit;
+    transition: transform 0.1s, opacity 0.2s;
+    flex: 1;
+    max-width: 150px;
+}
+.pop-btn:active {
+    transform: scale(0.96);
+}
+.pop-btn-cancel {
+    background: #f0f0f0;
+    color: #666;
+}
+.pop-btn-confirm {
+    background: #F2C037;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(242, 192, 55, 0.4);
+}
+.pop-btn-confirm:hover {
+    background: #e0b132;
+}
+
+/* 手機版適配 (防止鍵盤彈出時遮擋) */
+@media (max-height: 600px) {
+    .pop-modal {
+        max-height: 95vh;
+        padding: 15px;
+    }
+    .pop-icon {
+        display: none;
+    }
+}
+/* Pop-up 按鈕手機修復 */
+@media (max-width: 600px) {
+    .pop-footer {
+        flex-direction: row;
+        gap: 8px;
+    }
+    .pop-btn {
+        padding: 8px 4px !important;
+        font-size: 0.85rem !important;
+        flex: 1;
+        white-space: nowrap !important;
+    }
+}
+
+/* ========================================= */
+/* === [容器與基礎元件] === */
+/* ========================================= */
+
+.main-container {
+    max-width: 1200px;
+    margin: 2rem auto 2.5rem;
+    background-color: var(--secondary-bg);
+    box-shadow: 0 18px 45px var(--shadow-color);
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.7);
+    backdrop-filter: blur(10px);
+    position: relative;
+}
+
+.page-content {
+    display: none;
+    background: radial-gradient(circle at top, #fdfbf7 0, #fbf8f3 45%, #f3f4f6 100%);
+    min-height: 80vh;
+}
+.page-content.active {
+    display: block;
+}
+
+/* Section Box */
+.section-box {
+    padding: 2rem;
+    border-bottom: 1px solid rgba(225,216,200,0.6);
+    background-color: rgba(252,250,246,0.88);
+    scroll-margin-top: 160px; /* 捲動時預留頂部空間 */
+}
+.section-box:nth-child(odd) {
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(251,246,238,0.9));
+}
+.section-box:last-child {
+    border-bottom: none;
+}
+
+/* Input Styles */
+.input-group { margin-bottom: 1.25rem; }
+.input-group label {
+    display: block; font-weight: 600; margin-bottom: 0.55rem;
+    font-size: 1.05rem; color: #716659;
+}
+.input-group input[type="text"],
+.input-group input[type="number"],
+.input-group textarea,
+.input-group select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 0.96rem;
+    box-sizing: border-box;
+    background-color: #fefcf9;
+    font-family: inherit;
+    transition: all var(--transition-fast);
+}
+.input-group textarea {
+    resize: vertical; min-height: 90px;
+}
+.input-group input:focus, .input-group textarea:focus, .input-group select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(90, 143, 123, 0.25), 0 10px 20px rgba(0,0,0,0.08);
+    background-color: #ffffff;
+    transform: translateY(-1px);
+}
+
+/* Buttons */
+.action-btn, .secondary-btn, .danger-btn, .light-btn, .btn {
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.98rem;
+    padding: 0.7rem 1.5rem;
+    transition: all var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    white-space: nowrap;
+}
+.action-btn {
+    color: white;
+    background: linear-gradient(135deg, #5A8F7B, #78a693);
+    box-shadow: 0 10px 20px rgba(41,81,64,0.35);
+}
+.action-btn:hover {
+    opacity: 0.95; transform: translateY(-1px);
+    box-shadow: 0 14px 26px rgba(41,81,64,0.38);
+}
+.action-btn:active {
+    transform: translateY(1px) scale(0.98);
+}
+.secondary-btn {
+    background: linear-gradient(135deg, var(--btn-brown-bg), var(--btn-brown-hover));
+    color:#fff;
+    box-shadow: 0 8px 16px rgba(87,69,50,0.35);
+}
+.danger-btn {
+    background: linear-gradient(135deg, #c86a5a, #de8b7c);
+    color:#fff; padding:0.45rem 0.9rem;
+    box-shadow: 0 7px 15px rgba(133,54,41,0.4);
+}
+.light-btn {
+    background: linear-gradient(135deg, #cfe3d9, #9fbfaf);
+    color:#305244; padding:0.55rem 1.1rem;
+    box-shadow: 0 7px 14px rgba(60,90,80,0.28);
+}
+
+/* Details/Summary */
+details {
+    background: #fdfdfc;
+    border: 1px solid rgba(225,216,200,0.9);
+    border-radius: var(--radius-md);
+    margin-bottom: 1rem;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.04);
+    overflow: hidden;
+}
+summary {
+    padding: 1rem 1.25rem;
+    font-weight: 500;
+    font-size: 1.2rem;
+    color: var(--title-color);
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    justify-content:space-between;
+    align-items:center;
+    background: linear-gradient(90deg, rgba(250,247,241,0.95), rgba(239,247,243,0.9));
+}
+summary::-webkit-details-marker { display: none; }
+summary::after {
+    content: '＋';
+    font-size: 1.4rem;
+    transition: transform var(--transition-fast), color var(--transition-fast);
+    color: var(--accent-color);
+}
+details[open] > summary::after { transform: rotate(45deg); color: #44725f; }
+
+/* ========================================= */
+/* === [Cozy Touch 評語 Checkbox] === */
+/* ========================================= */
+.check-item {
+    border: 1px solid rgba(225,216,200,0.9);
+    border-radius: 10px;
+    margin-bottom: 0.8rem;
+    background: #ffffff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    overflow: hidden;
+}
+.check-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(90, 143, 123, 0.1);
+    border-color: var(--accent-color);
+}
+.check-item:has(input:checked) {
+    background-color: #fcfdfc;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 1px var(--accent-color) inset;
+}
+.check-item-header {
+    display: flex; align-items: center; width: 100%; position: relative; padding: 0;
+}
+.check-item-header input[type="checkbox"] {
+    position: absolute; left: 12px; width: 1.2rem; height: 1.2rem;
+    accent-color: var(--accent-color);
+    cursor: pointer; pointer-events: none; /* 穿透點擊 */
+}
+.check-item-header label {
+    flex: 1; font-size: 1.05rem; font-weight: 500; cursor: pointer;
+    padding: 14px 12px 14px 42px; display: block; user-select: none; color: #5b5044;
+}
+.check-item:has(input:checked) label {
+    color: #2c4c3f; font-weight: 600;
+}
+.interactive-module {
+    display: none;
+    background-color: #f7faf7;
+    border: 1px dashed rgba(90,143,123,0.5);
+    border-radius: var(--radius-md);
+    padding: 0.9rem;
+    margin-top: 0.8rem;
+}
+
+/* ========================================= */
+/* === [學生總覽表格 Table] === */
+/* ========================================= */
+#student-overview-table-wrapper {
+    overflow: auto;
+    max-height: 70vh;
+    margin-top: 1.25rem;
+    background-color: #fdfbf8;
+    border-radius: 12px;
+    border: 1px solid rgba(225,216,200,0.9);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.06);
+}
+#student-overview-table {
+    width: 100%;
+    min-width: 1200px;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.85em;
+}
+/* 凍結表頭 */
+#student-overview-table thead th {
+    position: sticky; top: 0; z-index: 10;
+    background: linear-gradient(135deg, #f1ece4, #e8f0ea);
+    border-bottom: 1px solid rgba(225,216,200,0.9);
+}
+#student-overview-table th, #student-overview-table td {
+    border: 1px solid rgba(225,216,200,0.9);
+    padding: 0.55rem 0.75rem;
+    text-align: center;
+    vertical-align: top;
+}
+/* 凍結左上角 */
+#student-overview-table th:nth-child(1), #student-overview-table td:nth-child(1) {
+    position: sticky; left: 0; z-index: 5; width: 80px;
+    background-color: #fdfbf8; border-right: 1px solid rgba(225,216,200,0.9);
+}
+#student-overview-table th:nth-child(2), #student-overview-table td:nth-child(2) {
+    position: sticky; left: 80px; z-index: 5; width: 90px;
+    background-color: #fdfbf8; border-right: 2px solid var(--accent-color);
+}
+#student-overview-table thead th:nth-child(1), #student-overview-table thead th:nth-child(2) { z-index: 20; }
+
+#student-overview-table textarea {
+    min-height: 120px !important; width: 100% !important;
+    padding: 8px !important; line-height: 1.5 !important;
+    background: transparent; border: 1px dashed transparent;
+    transition: all 0.2s;
+}
+#student-overview-table textarea:focus {
+    outline: none; background-color: #fff;
+    box-shadow: 0 0 0 2px var(--accent-color) inset;
+    border-radius: 4px;
+}
+.row-missing { background-color: var(--danger-bg-soft); }
+
+/* ========================================= */
+/* === [Dashboard 卡片樣式] === */
+/* ========================================= */
+.task-list-container, .class-group-content, .folder-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    padding: 0.5rem 0;
+}
+.task-item, .cozy-folder {
+    background: #ffffff !important;
+    border: 1px solid rgba(0,0,0,0.06) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03) !important;
+    padding: 1.5rem !important;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    display: flex; flex-direction: column; justify-content: space-between;
+    min-height: 160px;
+}
+.task-item:hover, .cozy-folder:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.08) !important;
+    border-color: rgba(0,0,0,0.1) !important;
+}
+.class-title, .folder-title {
+    font-size: 1.6rem; font-weight: 700; color: #4a4a4a; margin-bottom: auto;
+}
+/* 裝飾線 */
+.cozy-folder::before {
+    content: ""; position: absolute; top: 0; left: 24px;
+    width: 60px; height: 6px; background: var(--accent-color);
+    border-radius: 0 0 6px 6px; opacity: 0.6;
+}
+
+/* Kebab Menu */
+.kebab-menu-container { position: absolute; top: 10px; right: 10px; z-index: 20; }
+.kebab-btn {
+    background: transparent; border: none; font-size: 1.4rem; color: #ccc; cursor: pointer;
+}
+.kebab-dropdown {
+    display: none; position: absolute; top: 100%; right: 0; width: 140px;
+    background: white; border: 1px solid #e1d8c8; border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    z-index: 30;
+}
+.kebab-dropdown.show { display: block; }
+
+/* ========================================= */
+/* === [v12.1] 終極 Header & 導航 UI 修復 === */
+/* ========================================= */
+
+/* 設定選單 (強制最頂層) */
+.settings-menu-popover {
+    position: absolute; top: 50px; right: 0;
+    background: #fff; border-radius: 12px;
+    box-shadow: 0 10px 60px rgba(0,0,0,0.3);
+    border: 1px solid rgba(0,0,0,0.05);
+    width: 200px; padding: 12px;
+    z-index: 2147483647 !important;
+    color: #555; text-align: left;
+}
+.font-controls-row { display: flex; gap: 5px; justify-content: space-between; }
+.font-controls-row button { flex: 1; padding: 6px 0; border: 1px solid #eee; background: #f9f9f9; border-radius: 6px; cursor: pointer; }
+
+/* 導航列 */
 .page-nav-wrapper {
     background-color: #fff; border-bottom: 1px solid rgba(0,0,0,0.05);
     position: relative; z-index: 1000;
@@ -162,300 +723,110 @@ header h1 {
 .nav-btn {
     background: transparent; border: none; cursor: pointer; padding: 8px 16px;
     border-radius: 12px; color: #888; font-size: 1rem; font-weight: 500;
-    display: flex; align-items: center; gap: 6px; transition: all 0.2s ease;
-    font-family: inherit;
+    display: flex; align-items: center; gap: 6px; transition: all 0.2s ease; font-family: inherit;
 }
 .nav-btn:hover { background-color: rgba(0,0,0,0.03); color: #555; }
-.nav-btn.active {
-    color: var(--accent-color); background-color: var(--accent-color-soft);
-    font-weight: bold;
-}
+.nav-btn.active { color: var(--accent-color); background-color: var(--accent-color-soft); font-weight: bold; }
 
-/* 懸浮島子導航 (Floating Island) */
+/* 子導航懸浮島 (Floating Island) */
 .sub-nav-island {
     position: absolute; top: 65px; left: 50%; transform: translateX(-50%);
-    background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
-    border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.5); box-shadow: 0 8px 30px rgba(0,0,0,0.08);
     padding: 6px 8px; border-radius: 99px;
     display: flex; gap: 5px; z-index: 1001; white-space: nowrap;
-    opacity: 0; animation: floatDownCenterFixed 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    animation: floatDown 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-@keyframes floatDownCenterFixed {
+@keyframes floatDown {
     from { opacity: 0; transform: translate(-50%, -10px); }
     to { opacity: 1; transform: translate(-50%, 0); }
 }
 .sub-nav-btn {
     padding: 6px 16px; font-size: 0.9rem; color: #666; background: transparent;
-    border: none; border-radius: 99px; cursor: pointer; transition: all 0.2s;
-    font-family: inherit; white-space: nowrap;
+    border: none; border-radius: 99px; cursor: pointer; transition: all 0.2s; white-space: nowrap;
 }
-.sub-nav-btn:hover { background-color: rgba(0,0,0,0.05); color: #333; }
 .sub-nav-btn.active {
     background-color: var(--accent-color); color: #fff;
     box-shadow: 0 4px 10px rgba(90, 143, 123, 0.3);
 }
 
 /* ========================================= */
-/* === 4. 主容器與通用元件 (Layout & UI) === */
+/* === [v12.2] Mobile RWD (終極修復版) === */
 /* ========================================= */
-.main-container {
-    max-width: 1200px; margin: 2rem auto 2.5rem;
-    background-color: var(--secondary-bg);
-    box-shadow: 0 18px 45px var(--shadow-color);
-    border-radius: 20px; overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.7);
-    backdrop-filter: blur(10px); position: relative;
-}
-.page-content {
-    display: none; background: radial-gradient(circle at top, #fdfbf7 0, #fbf8f3 45%, #f3f4f6 100%);
-    min-height: 80vh;
-}
-.page-content.active { display: block; }
+@media (max-width: 768px) {
+    /* Header: 左對齊 */
+    header {
+        padding: 15px 20px !important; gap: 12px !important;
+        flex-direction: column !important; align-items: flex-start !important;
+    }
+    header h1 { text-align: left !important; font-size: 1.6rem !important; width: 100%; }
+    .auth-container { margin: 0 !important; justify-content: flex-start !important; max-width: 75%; }
+    
+    /* Setting 掣：拍埋膠囊右邊 */
+    .header-right {
+        position: absolute !important; top: auto !important;
+        bottom: 18px !important; right: 20px !important; display: block !important;
+    }
+    .settings-menu-popover { right: 0 !important; left: auto !important; top: 45px !important; width: 180px !important; }
 
-.section-box {
-    padding: 2rem; border-bottom: 1px solid rgba(225,216,200,0.6);
-    background-color: rgba(252,250,246,0.88); scroll-margin-top: 160px;
-}
-.section-box:nth-child(odd) {
-    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(251,246,238,0.9));
-}
+    /* 導航修正 */
+    .main-nav { justify-content: space-between !important; width: 100%; overflow-x: auto; padding: 0 10px; }
+    .nav-btn { flex: 1; justify-content: center; padding: 8px 0; display: flex; }
+    .nav-btn .nav-text { display: none !important; } /* 隱藏文字 */
+    .nav-btn .nav-icon { font-size: 1.5rem; margin: 0 !important; }
+    
+    /* 子導航: 橫滑 + 置中 */
+    .sub-nav-island {
+        position: static; transform: none; width: 100%; border-radius: 0;
+        background: #fcfcfc; padding: 12px 0; display: flex; justify-content: center; gap: 8px;
+    }
 
-/* 輸入框 */
-.input-group label { display: block; font-weight: 600; margin-bottom: 0.55rem; color: #716659; }
-.input-group input, .input-group textarea, .input-group select, .pop-input {
-    width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color);
-    border-radius: var(--radius-md); font-size: 0.96rem; box-sizing: border-box;
-    background-color: #fefcf9; font-family: inherit;
-    transition: all var(--transition-fast);
-}
-.input-group input:focus, .input-group textarea:focus {
-    outline: none; border-color: var(--accent-color);
-    box-shadow: 0 0 0 2px rgba(90, 143, 123, 0.25); background-color: #ffffff;
-}
-
-/* 按鈕樣式 */
-.action-btn, .secondary-btn, .danger-btn, .light-btn, .btn {
-    border-radius: 999px; border: none; cursor: pointer; font-family: inherit;
-    padding: 0.7rem 1.5rem; display: inline-flex; align-items: center;
-    justify-content: center; gap: 0.25rem; white-space: nowrap;
-    transition: all var(--transition-fast);
-}
-.action-btn {
-    color: white; background: linear-gradient(135deg, #5A8F7B, #78a693);
-    box-shadow: 0 10px 20px rgba(41,81,64,0.35);
-}
-.action-btn:hover { opacity: 0.95; transform: translateY(-1px); }
-.action-btn:active { transform: scale(0.98); }
-
-/* Details & Summary */
-details {
-    background: #fdfdfc; border: 1px solid rgba(225,216,200,0.9);
-    border-radius: var(--radius-md); margin-bottom: 1rem;
-    box-shadow: 0 8px 18px rgba(0,0,0,0.04); overflow: hidden;
-}
-summary {
-    padding: 1rem 1.25rem; font-weight: 500; font-size: 1.2rem;
-    color: var(--title-color); cursor: pointer; list-style: none;
-    display: flex; justify-content: space-between; align-items: center;
-    background: linear-gradient(90deg, rgba(250,247,241,0.95), rgba(239,247,243,0.9));
-}
-summary::-webkit-details-marker { display: none; }
-summary::after { content: '＋'; font-size: 1.4rem; color: var(--accent-color); transition: 0.2s; }
-details[open] > summary::after { transform: rotate(45deg); }
-
-/* ========================================= */
-/* === 5. 評語 Checkbox (Cozy Touch) === */
-/* ========================================= */
-.check-item {
-    border: 1px solid rgba(225,216,200,0.9); border-radius: 10px;
-    margin-bottom: 0.8rem; background: #ffffff;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.03); transition: all 0.2s ease;
-    cursor: pointer; overflow: hidden;
-}
-.check-item:hover { transform: translateY(-2px); border-color: var(--accent-color); }
-.check-item:has(input:checked) {
-    background-color: #fcfdfc; border-color: var(--accent-color);
-    box-shadow: 0 0 0 1px var(--accent-color) inset;
-}
-.check-item-header {
-    display: flex; align-items: center; width: 100%; position: relative; padding: 0;
-}
-.check-item-header input[type="checkbox"] {
-    position: absolute; left: 12px; width: 1.2rem; height: 1.2rem;
-    accent-color: var(--accent-color); pointer-events: none;
-}
-.check-item-header label {
-    flex: 1; font-size: 1.05rem; font-weight: 500; cursor: pointer;
-    padding: 14px 12px 14px 42px; display: block; user-select: none; color: #5b5044;
-}
-.check-item:has(input:checked) label { color: #2c4c3f; font-weight: 600; }
-.check-item.is-problem label { color: var(--problem-color); }
-.check-item.is-excellent label { color: var(--excellent-color); }
-
-/* ========================================= */
-/* === 6. Pop Art 彈窗樣式 (Modal) === */
-/* ========================================= */
-.pop-overlay {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(105, 129, 118, 0.6); backdrop-filter: blur(5px);
-    display: flex; justify-content: center; align-items: center;
-    z-index: 2147483647; opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
-}
-.pop-overlay.active { opacity: 1; pointer-events: auto; }
-
-.pop-modal {
-    background: #ffffff; width: 90%; max-width: 460px; max-height: 85vh;
-    display: flex; flex-direction: column; border-radius: 24px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3); border: 4px solid #F2C037;
-    padding: 24px; text-align: center; color: #4a4a4a;
-    transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    position: relative;
-}
-.pop-overlay.active .pop-modal { transform: scale(1); }
-
-.pop-scroll-area {
-    text-align: left; background: #fffdf5; border-radius: 12px; padding: 10px;
-    flex: 1; overflow-y: auto; min-height: 100px; margin-bottom: 20px; border: 2px solid #eee;
-}
-.pop-list-item {
-    display: flex !important; align-items: center !important; text-align: left !important;
-    width: 100%; box-sizing: border-box; margin-bottom: 8px; padding: 10px;
-    background: #fff; border: 1px solid #eee; border-radius: 8px;
-}
-.pop-list-item:hover { background-color: #fcf4d6; }
-.pop-input { margin-bottom: 15px; border: 2px solid #e0e0e0; }
-.pop-input:focus { border-color: #F2C037; background-color: #fffdf8; }
-
-.pop-footer { display: flex; justify-content: center; gap: 12px; margin-top: auto; }
-.pop-btn {
-    padding: 10px 24px; border: none; border-radius: 99px; font-weight: bold;
-    cursor: pointer; flex: 1; max-width: 150px;
-}
-.pop-btn-confirm { background: #F2C037; color: #fff; }
-.pop-btn-confirm:hover { background: #e0b132; }
-
-/* 設定選單 (Setting Menu) */
-.settings-menu-popover {
-    position: fixed !important; top: 70px !important; right: 30px !important;
-    background: #fff; border-radius: 12px;
-    box-shadow: 0 10px 60px rgba(0,0,0,0.3) !important;
-    width: 200px; padding: 12px; z-index: 2147483647 !important;
-    color: #555; text-align: left;
-}
-.font-controls-row { display: flex; gap: 5px; }
-.font-controls-row button { flex: 1; padding: 6px; border: 1px solid #eee; cursor: pointer; }
-
-/* 登入牆 (Login Gate) */
-#login-gate {
-    position: fixed !important; inset: 0; background: rgba(47, 79, 79, 0.9) !important;
-    backdrop-filter: blur(15px) !important; z-index: 2147483647;
-    display: flex; justify-content: center; align-items: center; padding: 20px;
-    transition: opacity 0.8s, visibility 0.8s;
-}
-#login-gate.unlocked { opacity: 0; visibility: hidden; pointer-events: none; }
-.gate-card {
-    background: rgba(255, 255, 255, 0.95); box-shadow: 0 40px 100px rgba(0,0,0,0.5);
-    border-radius: 24px; max-width: 550px; padding: 50px 40px; text-align: center;
+    /* 手機版表格變卡片 (終極防爆版) */
+    #student-overview-table-wrapper { width: 100% !important; border: none !important; box-shadow: none !important; }
+    #student-overview-table, #student-overview-table tbody, #student-overview-table tr, #student-overview-table td { display: block !important; width: 100% !important; }
+    #student-overview-table thead { display: none !important; }
+    #student-overview-table tr {
+        margin-bottom: 20px; border: 2px solid #5A8F7B !important;
+        border-radius: 12px !important; padding: 15px !important; background: #fff !important;
+    }
+    #student-overview-table td {
+        display: flex !important; justify-content: space-between; padding: 10px 0 !important;
+        border-bottom: 1px dashed #eee !important; text-align: right !important;
+    }
+    #student-overview-table td:last-child { border-bottom: none !important; }
+    #student-overview-table td::before {
+        content: attr(data-label-fix); font-weight: bold; color: #5A8F7B; text-align: left; margin-right: 10px;
+    }
+    /* 補回欄位標籤 */
+    #student-overview-table td:nth-of-type(1)::before { content: "學號"; }
+    #student-overview-table td:nth-of-type(2)::before { content: "姓名"; }
+    #student-overview-table td:nth-of-type(3)::before { content: "內容"; }
+    #student-overview-table td:nth-of-type(4)::before { content: "表達"; }
+    #student-overview-table td:nth-of-type(5)::before { content: "結構"; }
+    #student-overview-table td:nth-of-type(6)::before { content: "標點"; }
+    #student-overview-table td:nth-of-type(7)::before { content: "錯別字"; }
+    #student-overview-table td:nth-of-type(8)::before { content: "總分"; }
+    #student-overview-table td:nth-of-type(9)::before { content: "評語"; }
+    #student-overview-table td:nth-of-type(10) { display: none !important; }
+    
+    #student-overview-table input[type="number"] { display: inline-block !important; width: 80px !important; background: #f0f0f0 !important; }
+    #student-overview-table textarea { width: 100% !important; box-sizing: border-box !important; }
 }
 
 /* ========================================= */
-/* === 7. 學生總覽表格 (Student Table) === */
+/* === [v12.5] 懸浮工具 (Back To Top & Float Nav) === */
 /* ========================================= */
-#student-overview-table-wrapper {
-    overflow: auto; max-height: 70vh; margin-top: 1.25rem;
-    background-color: #fdfbf8; border-radius: 12px;
-    border: 1px solid rgba(225,216,200,0.9); box-shadow: 0 10px 24px rgba(0,0,0,0.06);
+#back-to-top-btn {
+    display: none; position: fixed !important; bottom: 30px; right: 30px;
+    z-index: 2147483647; width: 45px; height: 45px; border-radius: 50%;
+    background-color: rgba(90, 143, 123, 0.3); color: #fff; border: none;
+    cursor: pointer; font-size: 1.4rem; backdrop-filter: blur(4px); transition: all 0.3s ease;
 }
-#student-overview-table {
-    width: 100%; min-width: 1200px; border-collapse: separate; border-spacing: 0;
-}
-#student-overview-table th, #student-overview-table td {
-    border: 1px solid rgba(225,216,200,0.9); padding: 0.55rem 0.75rem;
-    text-align: center; vertical-align: top;
-}
-/* 凍結表頭 */
-#student-overview-table thead th {
-    position: sticky; top: 0; z-index: 10;
-    background: linear-gradient(135deg, #f1ece4, #e8f0ea);
-}
-/* 凍結左側兩欄 */
-#student-overview-table th:nth-child(1), #student-overview-table td:nth-child(1) {
-    position: sticky; left: 0; z-index: 5; background-color: #fdfbf8; width: 80px;
-    border-right: 1px solid rgba(225,216,200,0.9);
-}
-#student-overview-table th:nth-child(2), #student-overview-table td:nth-child(2) {
-    position: sticky; left: 80px; z-index: 5; background-color: #fdfbf8; width: 90px;
-    border-right: 2px solid var(--accent-color);
-}
-#student-overview-table thead th:nth-child(1), #student-overview-table thead th:nth-child(2) { z-index: 20; }
-
-#student-overview-table textarea {
-    min-height: 120px !important; width: 100% !important; padding: 8px !important;
-    background: transparent; border: 1px dashed transparent; transition: all 0.2s;
-}
-#student-overview-table textarea:focus {
-    outline: none; background-color: #fff; box-shadow: 0 0 0 2px var(--accent-color) inset;
-}
-.row-missing { background-color: var(--danger-bg-soft); }
-
-/* ========================================= */
-/* === 8. 儀表板與卡片 (Dashboard) === */
-/* ========================================= */
-.task-list-container, .folder-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;
-}
-/* Cozy Folder 風格 */
-.cozy-folder, .task-item {
-    background: #ffffff; border-radius: 16px; padding: 1.5rem;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.05);
-    transition: all 0.3s ease; cursor: pointer; display: flex; flex-direction: column;
-    justify-content: space-between; min-height: 160px; position: relative;
-}
-.cozy-folder:hover, .task-item:hover {
-    transform: translateY(-5px); box-shadow: 0 15px 30px rgba(90, 143, 123, 0.1);
-    border-color: var(--accent-color-soft);
-}
-/* 裝飾標籤 */
-.cozy-folder::before {
-    content: ""; position: absolute; top: 0; left: 24px;
-    width: 60px; height: 6px; background: var(--accent-color);
-    border-radius: 0 0 6px 6px; opacity: 0.6;
-}
-.folder-title, .class-title {
-    font-size: 1.25rem; font-weight: 600; color: var(--title-color);
-    margin-bottom: 10px;
+#back-to-top-btn:hover {
+    background-color: var(--accent-color); opacity: 1; transform: translateY(-3px);
 }
 
-/* Kebab Menu (三點選單) */
-.kebab-menu-container { position: absolute; top: 10px; right: 10px; z-index: 20; }
-.kebab-btn {
-    background: transparent; border: none; font-size: 1.4rem; color: #ccc; cursor: pointer;
-}
-.kebab-dropdown {
-    display: none; position: absolute; top: 100%; right: 0; width: 140px;
-    background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    z-index: 30;
-}
-.kebab-dropdown.show { display: block; }
-
-/* ========================================= */
-/* === 9. 懸浮工具 (Toast, Float Nav) === */
-/* ========================================= */
-/* Toast Notification */
-#toast-container {
-    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-    z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;
-}
-.toast-notification {
-    background-color: white; color: var(--text-color); padding: 12px 20px;
-    border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-    display: flex; align-items: center; gap: 10px; pointer-events: auto;
-    opacity: 0; animation: toastSlideIn 0.4s forwards;
-}
-.toast-notification.success { border-left: 5px solid var(--excellent-color); }
-@keyframes toastSlideIn { to { opacity: 1; transform: translateY(0); } }
-
-/* Right Floating Nav */
+/* 懸浮導覽列 */
 #floating-nav {
     position: fixed; top: 50%; right: 20px; transform: translateY(-50%) translateX(30px);
     z-index: 1050; display: flex; flex-direction: column; gap: 12px;
@@ -468,132 +839,103 @@ details[open] > summary::after { transform: rotate(45deg); }
 .floating-nav-btn {
     width: 48px; height: 48px; border-radius: 50%; background: var(--accent-color-soft);
     color: var(--accent-color); display: flex; align-items: center; justify-content: center;
-    text-decoration: none; font-size: 1.5rem; transition: all 0.2s;
+    font-size: 1.5rem; transition: all 0.2s;
 }
 .floating-nav-btn:hover { background: var(--accent-color); color: white; transform: scale(1.1); }
 
-/* Back to Top */
-#back-to-top-btn {
-    display: none; position: fixed !important; bottom: 30px; right: 30px;
-    z-index: 2147483647; width: 45px; height: 45px; border-radius: 50%;
-    background-color: rgba(90, 143, 123, 0.3); color: #fff; border: none;
-    cursor: pointer; font-size: 1.4rem; backdrop-filter: blur(4px);
-    transition: all 0.3s ease;
+/* Toast Notification */
+#toast-container {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;
 }
-#back-to-top-btn:hover { background-color: var(--accent-color); transform: translateY(-3px); }
+.toast-notification {
+    background-color: white; color: var(--text-color); padding: 12px 20px;
+    border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    display: flex; align-items: center; gap: 10px; pointer-events: auto;
+    opacity: 0; animation: toastSlideIn 0.4s forwards; max-width: 90vw;
+}
+.toast-notification.success { border-left: 5px solid var(--excellent-color); }
+@keyframes toastSlideIn { to { opacity: 1; transform: translateY(0); } }
 
 /* ========================================= */
-/* === 10. 手機版適配 (Mobile RWD) === */
+/* === [v12.6] 導航置中強力修正 === */
 /* ========================================= */
-@media (max-width: 768px) {
-    /* Header 調整 */
-    header {
-        padding: 15px 20px !important; gap: 12px !important;
-        flex-direction: column !important; align-items: flex-start !important;
-    }
-    header h1 { width: 100%; font-size: 1.6rem !important; }
-    .auth-container { max-width: 75%; }
-    .header-right {
-        position: absolute !important; bottom: 18px !important; right: 20px !important;
-    }
-    .settings-menu-popover { right: 0 !important; top: 45px !important; width: 180px !important; }
-    .header-book-btn { display: flex; }
-
-    /* 導航調整 - 隱藏文字 */
-    .page-nav-wrapper { display: none !important; } /* 隱藏原本導航，改用書籤 */
-    .nav-btn { flex: 1; justify-content: center; padding: 8px 0; }
-    .nav-btn .nav-text { display: none !important; }
-    .nav-btn .nav-icon { font-size: 1.5rem; margin: 0 !important; }
-    
-    /* 懸浮子導航 */
+@keyframes floatDownCenterFixed {
+    from { opacity: 0; transform: translate(-50%, -10px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+@media (min-width: 769px) {
     .sub-nav-island {
-        position: static; transform: none; width: 100%; background: #fcfcfc;
-        display: flex; justify-content: center; opacity: 1 !important; animation: none !important;
+        left: 50% !important; transform: translateX(-50%) !important;
+        animation: floatDownCenterFixed 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
+        margin: 0 !important; right: auto !important; top: 65px !important;
     }
+    .settings-menu-popover { position: fixed !important; top: 70px !important; right: 30px !important; }
+}
 
-    /* 手機版表格變卡片 (終極防爆版) */
-    #student-overview-table-wrapper {
-        width: 100% !important; overflow-x: hidden !important;
-        background: transparent !important; border: none !important; box-shadow: none !important;
-    }
-    #student-overview-table, #student-overview-table tbody, #student-overview-table tr, #student-overview-table td {
-        display: block !important; width: 100% !important;
-    }
-    #student-overview-table thead { display: none !important; }
-    #student-overview-table tr {
-        margin-bottom: 20px; background: #fff !important;
-        border: 2px solid #5A8F7B !important; border-radius: 12px !important;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important; padding: 15px !important;
-    }
-    #student-overview-table td {
-        display: flex !important; justify-content: space-between; align-items: center;
-        border: none !important; border-bottom: 1px dashed #e0e0e0 !important;
-        padding: 12px 0 !important; text-align: right !important;
-    }
-    #student-overview-table td:last-child { border-bottom: none !important; }
-    
-    /* 加上標籤 */
-    #student-overview-table td::before {
-        content: attr(data-label-fix); font-weight: bold; color: #5A8F7B;
-        text-align: left; margin-right: 10px;
-    }
-    /* 補回標籤內容 */
-    #student-overview-table td:nth-of-type(1)::before { content: "學號"; }
-    #student-overview-table td:nth-of-type(2)::before { content: "姓名"; }
-    #student-overview-table td:nth-of-type(3)::before { content: "內容"; }
-    #student-overview-table td:nth-of-type(4)::before { content: "表達"; }
-    #student-overview-table td:nth-of-type(5)::before { content: "結構"; }
-    #student-overview-table td:nth-of-type(6)::before { content: "標點"; }
-    #student-overview-table td:nth-of-type(7)::before { content: "錯別字"; }
-    #student-overview-table td:nth-of-type(8)::before { content: "總分"; }
-    #student-overview-table td:nth-of-type(9)::before { content: "評語"; }
-    #student-overview-table td:nth-of-type(10) { display: none !important; }
+/* ========================================= */
+/* === [Edition v13.2] 手機版玻璃書籤 & Overlay === */
+/* ========================================= */
+#mobile-book-trigger { display: none; }
+@media (max-width: 768px) {
+    .page-nav-wrapper { display: none !important; }
 
-    #student-overview-table input[type="number"] {
-        display: inline-block !important; width: 80px !important;
-        background-color: #f0f0f0 !important; font-size: 16px !important;
-    }
-    #student-overview-table td:nth-of-type(9) { flex-direction: column; align-items: flex-start; }
-
-    /* 全螢幕磨砂目錄 (Mobile Overlay) */
     #mobile-book-trigger {
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         position: fixed; bottom: 25px; right: 20px; width: 60px; height: 60px; z-index: 2000;
-        background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(12px);
+        cursor: pointer; background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(12px);
         border: 1px solid rgba(255, 255, 255, 0.8); border-radius: 18px;
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); color: #3d5c4f;
     }
+    
+    /* 避開書籤 */
+    #floating-nav { bottom: 95px !important; right: 20px !important; flex-direction: column !important; transform: none !important; }
+    #back-to-top-btn { bottom: 100px !important; right: 80px !important; }
+
+    /* 全螢幕目錄 */
     #mobile-book-overlay {
         position: fixed; inset: 0; background: rgba(253, 251, 247, 0.85);
         backdrop-filter: blur(12px); z-index: 3001; display: flex; flex-direction: column;
         opacity: 0; pointer-events: none; transition: all 0.3s ease; padding: 20px 25px; overflow-y: auto;
     }
     #mobile-book-overlay.active { opacity: 1; pointer-events: auto; }
+    
     .book-menu-title { text-align: center; font-size: 1.4rem; margin-bottom: 30px; letter-spacing: 3px; }
     .book-main-item { font-size: 1.2rem; padding: 18px 10px; border-bottom: 1px dashed rgba(0,0,0,0.05); }
-    
-    /* 避開書籤的浮動按鈕 */
-    #floating-nav { bottom: 95px !important; right: 20px !important; flex-direction: column !important; }
-    #back-to-top-btn { bottom: 100px !important; right: 80px !important; }
+    .book-close-btn {
+        position: absolute; top: 20px; right: 20px; width: 40px; height: 40px;
+        border-radius: 50%; background: rgba(0,0,0,0.05); border: none; display: flex; align-items: center; justify-content: center;
+    }
 }
 
 /* ========================================= */
-/* === 11. 列印與報告 (Print & Report) === */
+/* === [v11.0] AI 頁面美化 === */
+/* ========================================= */
+.ai-magic-card {
+    background: #fff; border-radius: 16px; padding: 25px;
+    box-shadow: 0 8px 20px rgba(90, 143, 123, 0.08); position: relative; overflow: hidden;
+}
+.cozy-hint {
+    background-color: rgba(255, 255, 255, 0.6); border: 1px dashed #d1e2d9;
+    border-radius: 12px; padding: 15px 18px; color: #666; font-size: 0.9rem;
+    display: flex; gap: 12px; align-items: flex-start;
+}
+.cozy-hint::before { content: "💡"; font-size: 1.1rem; flex-shrink: 0; }
+
+/* ========================================= */
+/* === [v19.9] PDF 列印樣式 === */
 /* ========================================= */
 #print-container { display: none; }
 @media print {
     body > :not(#print-container) { display: none !important; }
     #print-container {
         display: block !important; position: relative !important; width: 100% !important;
-        height: auto !important; margin: 0 !important; padding: 0 !important;
-        background-color: white !important;
+        height: auto !important; margin: 0 !important; padding: 0 !important; background-color: white !important;
     }
     #print-container * { visibility: visible !important; print-color-adjust: exact !important; }
     html, body { height: auto !important; overflow: visible !important; margin: 0 !important; }
     @page { size: A4 portrait; margin: 0; }
 }
-
-/* 雜誌風報告 */
 .report-page {
     width: 210mm; min-height: 297mm; margin: 0 auto; background: #fff;
     font-size: 12pt; font-family: "LXGW WenKai TC", serif; color: #444;
@@ -608,17 +950,21 @@ details[open] > summary::after { transform: rotate(45deg); }
 .score-table th { text-align: left; color: #999; border-bottom: 1px solid #eee; }
 .score-table td { padding: 10px 0; font-size: 13pt; border-bottom: 1px solid #f9f9f9; }
 
-/* AI 頁面 */
-.ai-magic-card {
-    background: #fff; border-radius: 16px; padding: 25px;
-    box-shadow: 0 8px 20px rgba(90, 143, 123, 0.08); position: relative; overflow: hidden;
+/* 登入牆樣式 (Login Gate) */
+#login-gate {
+    position: fixed !important; inset: 0; background: rgba(47, 79, 79, 0.9) !important;
+    backdrop-filter: blur(15px) !important; z-index: 2147483647;
+    display: flex; justify-content: center; align-items: center; padding: 20px;
+    transition: opacity 0.8s, visibility 0.8s;
 }
-.cozy-hint {
-    background-color: rgba(255, 255, 255, 0.6); border: 1px dashed #d1e2d9;
-    border-radius: 12px; padding: 15px 18px; color: #666; font-size: 0.9rem;
-    display: flex; gap: 12px; align-items: flex-start;
+#login-gate.unlocked { opacity: 0; visibility: hidden; pointer-events: none; }
+.gate-card {
+    background: rgba(255, 255, 255, 0.95); box-shadow: 0 40px 100px rgba(0,0,0,0.5);
+    border-radius: 24px; max-width: 550px; padding: 50px 40px; text-align: center;
 }
-.cozy-hint::before { content: "💡"; font-size: 1.1rem; flex-shrink: 0; }
+/* Modal Z-Index Fix */
+#pop-generic-modal { z-index: 2147483650 !important; }
+#pop-manage-students-modal { z-index: 2147483640 !important; }
 </style>
 
 </head>
