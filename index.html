@@ -20,43 +20,49 @@
   <link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC&display=swap" rel="stylesheet">
 
 <style>
-/* ✅ 新增：專案資訊按鈕樣式 (圓角膠囊 + 可點擊) */
+/* [v20.2-Header-UI-Fix] 專案資訊按鈕 - 手機版優化 & 強制顯示 */
 .project-header-info {
-  /* 位置 */
   margin-top: 0.6rem; 
   align-self: flex-start;
-
-  /* 形狀與顏色 (跟番 Header 其他按鈕風格) */
-  background-color: rgba(0, 0, 0, 0.15); /* 深色半透明底 */
-  border: 1px solid rgba(255, 255, 255, 0.3); /* 淺色邊框 */
-  border-radius: 999px; /* 圓角膠囊形 */
-  padding: 0.4rem 1rem; 
-  
-  /* 字體 */
-  font-size: 0.95rem;
+  background-color: rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  padding: 0.4rem 0.8rem; /* 手機版稍微縮小 padding */
+  font-size: 0.9rem;
   color: #ffffff;
-  
-  /* 排版 */
   display: inline-flex;
-  gap: 0.6rem;
+  gap: 0.5rem;
   align-items: center;
   backdrop-filter: blur(4px);
-  
-  /* 互動感 (變成按鈕的關鍵) */
   cursor: pointer; 
   transition: all 0.2s ease;
-  user-select: none; /* 防止選取文字 */
+  user-select: none;
+  max-width: 45vw; /* 防止手機版太長 */
 }
 
-/* 滑鼠指住時的效果 */
+/* [v20.2] 確保 Header 內元件在手機版不打架 */
+@media (max-width: 600px) {
+    .header-left {
+        gap: 0.5rem !important;
+    }
+    .header-left h1 {
+        font-size: 1.1rem !important; /* 標題縮小 */
+    }
+    .project-header-info {
+        font-size: 0.8rem; /* 字體縮小 */
+        padding: 0.3rem 0.6rem;
+    }
+    .project-header-info span {
+        max-width: 100px; /* 限制文字長度 */
+    }
+}
+
 .project-header-info:hover {
-  background-color: rgba(0, 0, 0, 0.3); /* 變深色 */
-  transform: translateY(-1px); /* 輕微浮起 */
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  background-color: rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
   border-color: rgba(255, 255, 255, 0.6);
 }
 
-/* 按下去時的效果 */
 .project-header-info:active {
   transform: translateY(0);
   background-color: rgba(0, 0, 0, 0.4);
@@ -65,21 +71,32 @@
 .project-header-info span {
   display: inline-block;
   white-space: nowrap;
-  max-width: 300px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-#ph-class {
-    font-weight: bold;
-    color: #fff; 
-}
+#ph-class { font-weight: bold; color: #fff; }
+.project-header-info .ph-divider { opacity: 0.5; margin: 0 2px; }
 
-.project-header-info .ph-divider {
-  opacity: 0.5;
-  margin: 0 2px;
+/* [v20.2] 新增：彈窗關閉按鈕樣式 */
+.pop-close-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(0,0,0,0.05);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 1.2rem;
+    color: #888;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
 }
-
+.pop-close-btn:hover { background: #eee; color: #333; }
 /* ========================================= */
 /* === [Pro-v7.5] Pop Art 彈窗樣式 (終極修復版) === */
 /* ========================================= */
@@ -3943,132 +3960,6 @@ header h1 {
 #pop-manage-students-modal { z-index: 2147483640 !important; }
 /* 確保通用彈窗的底色更深一點，區分層次 */
 #pop-generic-modal .pop-modal { box-shadow: 0 25px 80px rgba(0,0,0,0.5); }
-/* ========================================= */
-/* === [v20.2] UI 修復補丁 (標題 & 書籤) === */
-/* ========================================= */
-
-/* 1. 頁面標題資訊欄 (Project Info Banner) - 用於 P4, P5, P7 */
-.project-info-banner {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 15px;
-    background: linear-gradient(135deg, #fffdfa, #fdfbf7);
-    border: 1px solid #e1d8c8;
-    border-radius: 16px;
-    padding: 15px 25px;
-    margin-bottom: 25px;
-    box-shadow: 0 4px 15px rgba(90, 143, 123, 0.05);
-    text-align: center;
-    animation: fadeIn 0.5s ease;
-}
-
-.pib-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 1.1rem;
-    color: #5b5044;
-}
-
-.pib-icon {
-    font-size: 1.3rem;
-    background: #f0ebe4;
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    color: #8d775f;
-}
-
-.pib-text {
-    font-weight: bold;
-    color: #3d5c4f;
-    border-bottom: 1px dashed #ccc;
-    padding-bottom: 2px;
-}
-
-.pib-divider {
-    width: 1px;
-    height: 25px;
-    background: #ddd;
-    display: none; /* 手機版隱藏 */
-}
-
-@media (min-width: 600px) {
-    .pib-divider { display: block; }
-}
-
-/* 2. 手機版書籤掣 (強制置頂修復) */
-#mobile-book-trigger {
-    z-index: 2147483647 !important; /* 宇宙最高層級 */
-    bottom: 30px !important;        /* 確保位置 */
-    right: 20px !important;
-    display: flex !important;       /* 強制顯示 */
-    opacity: 1 !important;
-    visibility: visible !important;
-    pointer-events: auto !important; /* 確保可點擊 */
-}
-
-/* 避免 Desktop 顯示書籤 */
-@media (min-width: 769px) {
-    #mobile-book-trigger { display: none !important; }
-}
-
-/* 3. 彈窗右上角關閉鍵 (Close X) */
-.pop-close-x {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: #f5f5f5;
-    border: none;
-    color: #888;
-    font-size: 1.2rem;
-    line-height: 1;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-}
-.pop-close-x:hover {
-    background: #e0e0e0;
-    color: #333;
-    transform: rotate(90deg);
-}
-
-/* 4. Header 專案按鈕微調 (確保常駐) */
-#project-header-btn-group {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    margin-left: 10px;
-}
-
-/* 常駐的資料夾圖示按鈕 */
-.header-folder-btn {
-    background: rgba(255, 255, 255, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: #fff;
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-.header-folder-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: scale(1.05);
-}
 </style>
 
 </head>
@@ -4081,35 +3972,31 @@ header h1 {
 <!-- [v12.1] Header 最終版 -->
 <header>
     <!-- 左邊：標題 & 身份 -->
-    <div class="header-left">
-    <div style="display:flex; align-items:center; flex-wrap:wrap; gap:10px;">
-        <h1 style="cursor:pointer;" onclick="showPage('page-home')">我不想努力了</h1>
-        
-        <!-- [v20.2] 新增：Header 專案控制組 -->
-        <div id="project-header-btn-group">
-            <!-- 1. 常駐的資料夾按鈕 (點擊打開選單) -->
-            <button class="header-folder-btn" onclick="promptAndLoadCloudProject()" title="切換/載入專案">
-                📂
-            </button>
+  <div class="header-left">
+          <h1>我不想努力了</h1>
+          
+          <div id="project-header-info" class="project-header-info" onclick="promptAndLoadCloudProject()" title="點擊切換專案">
+             <span id="ph-class">F.1A</span>
+             <span class="ph-divider">|</span>
+             <span id="ph-topic">載入專案...</span>
+          </div>
 
-            <!-- 2. 專案資訊膠囊 (有專案時才顯示，點擊也可刷新) -->
-            <div id="project-header-info" class="project-header-info" style="display:none;" onclick="promptAndLoadCloudProject()">
-                <span id="ph-class"></span><span class="ph-divider">|</span><span id="ph-topic"></span>
+          <div class="auth-container">
+            <span id="auth-status">未連接</span>
+            <div id="auth-buttons">
+              <button id="login-btn" class="btn light-btn" style="padding: 2px 8px; font-size: 0.75rem;">登入</button>
+              <button id="logout-btn" class="btn danger-btn" style="padding: 2px 8px; font-size: 0.75rem; display:none;">登出</button>
             </div>
+             <button id="sync-btn" class="btn primary-btn" style="padding: 2px 8px; font-size: 0.75rem; display:none;" onclick="saveCurrentProjectToCloud()">
+               ☁️ 同步
+            </button>
+          </div>
+        </div>
+        
+        <div id="project-header-info" class="project-header-info" style="display:none; margin-top:2px;" onclick="promptAndLoadCloudProject()">
+            <span style="opacity:0.8">📂</span><span id="ph-class"></span><span class="ph-divider">|</span><span id="ph-topic"></span>
         </div>
     </div>
-
-    <!-- 身份狀態 -->
-    <div class="auth-container">
-        <span id="auth-status">未連接</span>
-        <div id="auth-buttons">
-            <button id="login-btn" class="btn light-btn" style="padding: 2px 8px; font-size: 0.75rem;">登入</button>
-            <button id="logout-btn" class="btn danger-btn" style="display: none; padding: 2px 8px; font-size: 0.75rem;">登出</button>
-            <button id="sync-btn" class="btn action-btn" style="display: none; padding: 2px 8px; font-size: 0.75rem;" disabled>同步</button>
-            <button class="font-control-btn" onclick="toggleSettingsMenu()">⚙️</button>
-        </div>
-    </div>
-</div>
 
     <!-- 右邊：Setting 掣 -->
     <div class="header-right">
@@ -5528,30 +5415,39 @@ function showToast(message, type = 'info') {
         }, 400);
     }, 3000);
 }
-// 新增：更新頂部專案資訊函式 (防彈版)
+// [v20.2-Header-UI-Fix] 更新頂部專案資訊 (優先讀取全域變數，解決切換頁面時資訊消失問題)
 function updateHeaderInfo() {
-    // 嘗試獲取各種可能的輸入框
-    const classInput = document.getElementById('student-class') || document.getElementById('student-class-manual');
-    const topicInput = document.getElementById('topic');
-    
-    // 獲取顯示容器
     const container = document.getElementById('project-header-info');
     const classSpan = document.getElementById('ph-class');
     const topicSpan = document.getElementById('ph-topic');
-
-    // 如果容器不存在 (可能未載入)，直接離開
+    
     if (!container || !classSpan || !topicSpan) return;
 
-    const className = classInput ? classInput.value.trim() : '';
-    const topic = topicInput ? topicInput.value.trim() : '';
+    // 優先從全域 fullProject 讀取 (因為這是最準確的來源)
+    let className = '';
+    let topic = '';
 
-    if (className || topic) {
-        container.style.display = 'inline-flex';
-        classSpan.textContent = className || '未設定班別';
-        topicSpan.textContent = topic || '未設定題目';
-    } else {
-        container.style.display = 'none';
+    if (typeof fullProject !== 'undefined' && fullProject.id) {
+        className = fullProject.class_name || '';
+        topic = fullProject.topic || '';
+    } 
+    
+    // 如果全域變數沒資料 (例如剛載入)，才嘗試讀取輸入框
+    if (!className) {
+        const classInput = document.getElementById('student-class') || document.getElementById('student-class-manual');
+        if (classInput) className = classInput.value.trim();
     }
+    if (!topic) {
+        const topicInput = document.getElementById('topic');
+        if (topicInput) topic = topicInput.value.trim();
+    }
+
+    // 更新介面
+    classSpan.textContent = className || '未定班級';
+    topicSpan.textContent = topic || '未命名專案';
+    
+    // [v20.2] 即使在手機版，也要確保這個按鈕是顯示的 (Flex)
+    container.style.display = 'inline-flex';
 }
 // --- Supabase 核心功能 ---
 
@@ -5649,52 +5545,82 @@ async function loadDataFromCloud() {
   }
 }
 
-// [Pro-v4.3] 混合雲端讀取器 (同時讀取新舊資料庫)
+// [v20.2-Header-UI-Fix] 混合雲端讀取器 (含關閉按鈕 & 點擊 Header 觸發)
 async function promptAndLoadCloudProject() {
     if (!currentUser) {
         alert("請先登入以使用雲端專案功能。");
         return;
     }
+
     const authStatus = document.getElementById('auth-status');
-    const originalText = authStatus.textContent;
-    authStatus.textContent = '正在搜尋雲端專案...';
+    // 暫存原本文字
+    const originalText = authStatus.textContent; 
+    authStatus.textContent = '搜尋中...';
+
+    const modal = document.getElementById('pop-project-details-modal');
+    const listDiv = document.getElementById('detail-student-list');
+    
+    // [v20.2] 加入關閉按鈕的 HTML 結構
+    // 清空並加入關閉按鈕
+    listDiv.innerHTML = '<div style="padding:20px; text-align:center;">載入中...</div>';
+    
+    // 顯示 Modal (先顯示，讓使用者知道有反應)
+    modal.classList.add('active');
+
+    // [v20.2] 確保 Modal 有關閉按鈕 (如果 HTML 裡原本沒有，動態加上)
+    if (!modal.querySelector('.pop-close-btn')) {
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'pop-close-btn';
+        closeBtn.innerHTML = '×';
+        closeBtn.onclick = () => modal.classList.remove('active');
+        modal.querySelector('.pop-modal').appendChild(closeBtn);
+    }
 
     try {
-        // 1. 讀取 [新] assignments 表
-        // (暫時移除 classes join 以避免關聯錯誤，只讀 title)
-    const { data: newProjects, error: newError } = await supabaseClient
-    .from('assignments')
-    // 👇 關鍵是這句，要加 classes(class_name)
-    .select('id, title, created_at, user_id, classes(class_name)') 
-    .eq('user_id', currentUser.id)
-    .order('created_at', { ascending: false });
-
-        // 2. 讀取 [舊] student_projects 表 (Legacy)
-        const { data: oldProjects, error: oldError } = await supabaseClient
-            .from('student_projects')
-            .select('id, topic, class_name, updated_at')
+        // 1. 讀取 assignments
+        const { data: assignments, error: err1 } = await supabaseClient
+            .from('assignments')
+            .select('*')
             .eq('user_id', currentUser.id)
             .order('updated_at', { ascending: false });
 
+        if (err1) throw err1;
+
+        // 2. 讀取 legacy projects
+        const { data: legacy, error: err2 } = await supabaseClient
+            .from('projects')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .order('created_at', { ascending: false });
+            
+        if (err2) throw err2;
+
         authStatus.textContent = originalText;
 
-        if (newError) console.error("新表讀取錯誤:", newError);
-        if (oldError) console.error("舊表讀取錯誤:", oldError);
+        // 合併資料
+        let allProjs = [];
+        if (assignments) {
+            allProjs = allProjs.concat(assignments.map(a => ({...a, type: 'new'})));
+        }
+        if (legacy) {
+            allProjs = allProjs.concat(legacy.map(p => ({
+                ...p, 
+                topic: p.title, 
+                class_name: p.class_name || '舊版專案',
+                type: 'legacy'
+            })));
+        }
 
-        // 3. 合併資料 (標準化格式)
-        let combinedList = [];
+        // 渲染列表
+        // [v20.2] 使用新的 Card 渲染，並傳入 listDiv
+        renderNewDetailCards(allProjs, listDiv);
 
-        // 處理新資料
-        if (newProjects) {
-            newProjects.forEach(p => {
-                combinedList.push({
-    id: p.id,
-    title: p.title,
-    // 👇 這段意思是：如果抓得到 class_name 就顯示，抓不到才顯示 (未分類)
-    className: (p.classes && p.classes.class_name) ? p.classes.class_name : '(未分類)',
-    date: p.created_at,
-    type: 'new'
-});
+    } catch (e) {
+        console.error(e);
+        listDiv.innerHTML = `<span style="color:red; padding:10px;">讀取失敗: ${e.message}</span>`;
+        authStatus.textContent = originalText;
+    }
+}
             });
         }
 
@@ -13757,206 +13683,6 @@ function deleteProjectFromDetails() {
     document.getElementById('pop-project-details-modal').classList.remove('active');
     confirmDeleteProjectDirectly(id, title);
 }
-
-/* ========================================= */
-/* === [v20.2] UI 邏輯修復包 === */
-/* ========================================= */
-
-// 1. 通用標題資訊欄渲染器 (用於 P4, P5, P7)
-function renderPageHeaderInfo(containerId) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-
-    // 獲取當前資訊 (優先從 DOM 抓，確保最新)
-    const className = document.getElementById('student-class')?.value || '未設定班別';
-    const topicName = document.getElementById('topic')?.value || '未設定題目';
-
-    // 檢查是否已經有 Banner，有的話移除舊的 (防止重複)
-    const oldBanner = container.querySelector('.project-info-banner');
-    if (oldBanner) oldBanner.remove();
-
-    // 建立 Banner HTML
-    const bannerHtml = `
-        <div class="project-info-banner">
-            <div class="pib-item">
-                <span class="pib-icon">🏫</span>
-                <span>班別：<span class="pib-text">${escapeHtml(className)}</span></span>
-            </div>
-            <div class="pib-divider"></div>
-            <div class="pib-item">
-                <span class="pib-icon">📝</span>
-                <span>題目：<span class="pib-text">${escapeHtml(topicName)}</span></span>
-            </div>
-        </div>
-    `;
-
-    // 插入到容器最前面
-    container.insertAdjacentHTML('afterbegin', bannerHtml);
-}
-
-// 2. 修改：學生總覽頁 (Page 4) 渲染
-// (請確認你的 renderStudentOverviewTable 函數開頭加入這一行)
-const originalRenderOverview = renderStudentOverviewTable;
-renderStudentOverviewTable = function() {
-    // 先執行原本邏輯
-    originalRenderOverview();
-    // 再插入美觀 Banner
-    renderPageHeaderInfo('page4');
-};
-
-// 3. 修改：評語分析頁 (Page 5) 渲染
-const originalRenderAnalysis = renderAnalysisPage;
-renderAnalysisPage = function() {
-    // 先執行原本邏輯
-    originalRenderAnalysis();
-    // 確保插入到 overview-container 內部最上面
-    const container = document.querySelector('#page5 .overview-container');
-    if(container) {
-        renderPageHeaderInfo('page5-content-wrapper'); // 假設你要加個 wrapper ID，或者直接操作 DOM
-        // 這裡我們直接操作 DOM 插入
-        const oldBanner = container.querySelector('.project-info-banner');
-        if(oldBanner) oldBanner.remove();
-        
-        const className = document.getElementById('student-class')?.value || '未設定班別';
-        const topicName = document.getElementById('topic')?.value || '未設定題目';
-        
-        const banner = document.createElement('div');
-        banner.className = 'project-info-banner';
-        banner.innerHTML = `
-            <div class="pib-item"><span class="pib-icon">🏫</span><span><span class="pib-text">${escapeHtml(className)}</span></span></div>
-            <div class="pib-divider"></div>
-            <div class="pib-item"><span class="pib-icon">📊</span><span>分析對象：<span class="pib-text">${escapeHtml(topicName)}</span></span></div>
-        `;
-        // 插在 page-header 之後
-        const header = container.querySelector('.page-header');
-        if(header) header.parentNode.insertBefore(banner, header.nextSibling);
-    }
-};
-
-// 4. 修改：生成回饋頁 (Page 7) 監聽
-// 在 showPage 切換到 page7 時觸發
-document.addEventListener('click', (e) => {
-    // 簡單監聽導航點擊
-    if(e.target && (e.target.id === 'nav-page7' || e.target.closest('#nav-page7'))) {
-        setTimeout(() => {
-            const container = document.querySelector('#page7 .overview-container');
-            if(container) {
-                // 移除舊 Banner
-                const old = container.querySelector('.project-info-banner');
-                if(old) old.remove();
-                
-                // 插入新 Banner (插在 h2 標題之後)
-                const h2 = container.querySelector('h2');
-                const className = document.getElementById('student-class')?.value || '未設定';
-                const topicName = document.getElementById('topic')?.value || '未設定';
-                
-                const banner = document.createElement('div');
-                banner.className = 'project-info-banner';
-                banner.innerHTML = `
-                    <div class="pib-item"><span class="pib-icon">🏫</span><span>${escapeHtml(className)}</span></div>
-                    <div class="pib-divider"></div>
-                    <div class="pib-item"><span class="pib-icon">🤖</span><span>回饋主題：<span class="pib-text">${escapeHtml(topicName)}</span></span></div>
-                `;
-                if(h2) h2.parentNode.insertBefore(banner, h2.nextSibling);
-            }
-        }, 100);
-    }
-});
-
-// 5. 修復：雲端專案讀取 (加入關閉鍵 & 強制刷新列表)
-async function promptAndLoadCloudProject() {
-    if (!currentUser) { alert("請先登入"); return; }
-    
-    const modal = document.getElementById('pop-project-modal');
-    const listContainer = document.getElementById('pop-project-list');
-    
-    // A. 顯示 Modal 前先清空列表 (防止顯示舊資料)
-    listContainer.innerHTML = '<div style="text-align:center; padding:20px; color:#999;"><div class="spinner"></div> 正在連線雲端...</div>';
-    modal.classList.add('active');
-
-    // B. 加入關閉按鈕 (如果未加)
-    if (!modal.querySelector('.pop-close-x')) {
-        const closeBtn = document.createElement('button');
-        closeBtn.className = 'pop-close-x';
-        closeBtn.innerHTML = '×';
-        closeBtn.onclick = () => modal.classList.remove('active');
-        modal.querySelector('.pop-modal').appendChild(closeBtn);
-    }
-
-    try {
-        // C. 重新讀取資料 (與原本邏輯相同，但確保每次都 fetch)
-        const { data: assignments, error } = await supabaseClient
-            .from('assignments')
-            .select('id, title, created_at, classes(class_name)')
-            .eq('user_id', currentUser.id)
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        listContainer.innerHTML = ''; // 再次清空 Loading
-
-        if (!assignments || assignments.length === 0) {
-            listContainer.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">沒有找到任何專案。</div>';
-            return;
-        }
-
-        // D. 渲染列表
-        assignments.forEach((p, idx) => {
-            const dateStr = new Date(p.created_at).toLocaleDateString();
-            const className = p.classes ? p.classes.class_name : '(未分類)';
-            
-            const item = document.createElement('div');
-            item.className = 'pop-list-item';
-            item.style.cursor = 'pointer';
-            item.innerHTML = `
-                <div style="font-weight:bold; color:#3d5c4f;">${idx+1}. ${escapeHtml(className)} - ${escapeHtml(p.title)}</div>
-                <div style="font-size:0.8rem; color:#888;">${dateStr}</div>
-            `;
-            item.onclick = () => {
-                modal.classList.remove('active');
-                openAssignment(p.id); // 載入並刷新 Header
-            };
-            listContainer.appendChild(item);
-        });
-
-    } catch (e) {
-        listContainer.innerHTML = `<div style="color:red; padding:20px;">讀取失敗: ${e.message}</div>`;
-    }
-}
-
-// 6. Header 資訊更新 (確保顯示正確)
-function updateHeaderInfo() {
-    const classInput = document.getElementById('student-class');
-    const topicInput = document.getElementById('topic');
-    const container = document.getElementById('project-header-info');
-    
-    if (!container) return;
-
-    const className = classInput ? classInput.value.trim() : '';
-    const topic = topicInput ? topicInput.value.trim() : '';
-
-    if (className || topic) {
-        container.style.display = 'inline-flex';
-        document.getElementById('ph-class').textContent = className || '未命名';
-        document.getElementById('ph-topic').textContent = topic || '無題目';
-    } else {
-        container.style.display = 'none';
-    }
-}
-
-// 7. 手機書籤修復 (確保 click event 綁定)
-window.toggleBookMenu = function() {
-    const overlay = document.getElementById('mobile-book-overlay');
-    if(overlay) {
-        overlay.classList.toggle('active');
-        // 如果是打開，自動展開當前頁
-        if(overlay.classList.contains('active') && typeof autoExpandCurrentSection === 'function') {
-            autoExpandCurrentSection();
-        }
-    } else {
-        console.error("找不到 #mobile-book-overlay");
-    }
-};
 </script> <!-- 呢個係原本全個檔案唯一的結尾，保留佢 -->
 
 <!-- [v12.2] Back To Top (確保在最外層，不受干擾) -->
