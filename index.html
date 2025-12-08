@@ -4249,6 +4249,17 @@ header h1 {
     </div>
     <!-- 🛑 修復結束 -->
 
+    <!-- 下面是操作區 -->
+    <div class="btn-group" style="margin-bottom: 1rem;">
+        <!-- 保留 Excel 匯入功能給 Page 2 直接使用 -->
+        <label class="light-btn brown" for="import-student-list" style="cursor: pointer;">匯入名單 (Excel)</label>
+        <input type="file" id="import-student-list" accept=".xlsx, .xls" style="display:none;">
+        <!-- [v19.2] 快速班級管理按鈕 -->
+<button class="light-btn" onclick="showPage('page8')" style="margin-left: 5px;">
+    🏫 管理班級
+</button>
+    </div>
+
     <div class="input-group">
         <label for="student-select">當前批改學生</label>
         <select id="student-select" style="font-size:1.1rem; padding:10px; border:2px solid var(--accent-color);">
@@ -4351,13 +4362,15 @@ header h1 {
             </div>
 
            <!-- [Pro-v9.4-FunctionalFix] 單一同步按鈕 -->
-<!-- [v19.8] 頁底導航 (取代舊有的清空/同步) -->
-<div class="btn-group" style="justify-content: space-between; margin-top: 2rem; padding-top: 1rem; border-top: 1px dashed #eee;">
-    <button class="secondary-btn" onclick="saveAndNavigate('prev')" style="padding-left:20px; padding-right:20px;">
-        ⏪ 上一位
+<div class="btn-group" style="justify-content: center; gap: 15px;">
+    <!-- 只保留同步按鈕 -->
+    <button class="action-btn" onclick="saveCurrentStudentData('cloud')" title="儲存並同步至雲端資料庫">
+        ☁️ 同步上雲
     </button>
-    <button class="secondary-btn" onclick="saveAndNavigate('next')" style="padding-left:20px; padding-right:20px;">
-        下一位 ⏩
+    
+    <!-- 清空按鈕 -->
+    <button class="action-btn clear-all" onclick="confirmUI('確定清空當前所有輸入？', () => clearAllCore())">
+        清空
     </button>
 </div>
 
@@ -6452,12 +6465,12 @@ document.addEventListener('click', (e) => {
 
 
 
-// [v19.8] 評語清單渲染 (修復展開邏輯)
+// [v19.2] 評語清單渲染 (支援即時編輯監聽)
 function buildChecklist() {
     const dataContainer = document.getElementById('critique-data');
     const checklistContainer = document.getElementById('checklist-container');
     
-    // 1. 狀態備份 (記住邊個打開左)
+    // 狀態備份
     const checkedStates = {}; const editedTexts = {};
     document.querySelectorAll('#checklist-container input[type="checkbox"]').forEach(cb => { 
         checkedStates[cb.id] = cb.checked; 
@@ -6500,50 +6513,27 @@ function buildChecklist() {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = `check-item ${type==='problem'?'is-problem':'is-excellent'}`;
                 
-                // 🔥 綁定 onchange 確保直接點 Checkbox 有反應
-                itemDiv.innerHTML = `<div class="check-item-header"><input type="checkbox" id="${id}" onchange="handleCheckboxChange(this)"><label for="${id}">${title}</label></div>`;
+                itemDiv.innerHTML = `<div class="check-item-header"><input type="checkbox" id="${id}"><label for="${id}">${title}</label></div>`;
+                if (hasOptions) itemDiv.appendChild(createInteractiveModule(id));
                 
-                if (hasOptions) {
-                    const module = createInteractiveModule(id);
-                    module.querySelectorAll('select, input').forEach(input => {
-                        input.addEventListener('change', () => {
-                            populateEditableTextarea(id);
-                            updateAllOutputs();
-                            isDataDirty = true;
-                            updateUIBasedOnAuthState();
-                        });
-                    });
-                    itemDiv.appendChild(module);
-                }
-                
+                // 編輯區 (預覽與修改)
                 const editDiv = document.createElement('div'); 
                 editDiv.className = 'editable-comment';
+                // 🔥 加入 oninput 事件，打字即觸發更新
                 editDiv.innerHTML = `<textarea id="text-${id}" placeholder="點擊此處編輯評語內容..." oninput="updateAllOutputs(); isDataDirty=true; updateUIBasedOnAuthState();"></textarea>`;
                 
                 itemDiv.appendChild(editDiv);
-                
-                // 🔥 綁定整張卡片的點擊事件 (UX 優化)
-                // 點擊卡片任何空白處 = 點擊 Checkbox
-                itemDiv.onclick = (e) => {
-                    // 如果點擊的是 input, select, textarea 或 label，交給它們自己處理，不重複觸發
-                    if (['INPUT', 'SELECT', 'TEXTAREA', 'LABEL'].includes(e.target.tagName)) return;
-                    
-                    const cb = itemDiv.querySelector('input[type="checkbox"]');
-                    cb.checked = !cb.checked;
-                    // 🔥 手動觸發變更邏輯
-                    handleCheckboxChange(cb);
-                };
-
                 content.appendChild(itemDiv);
                 
-                // 還原狀態
                 if (checkedStates[id]) {
                     const cb = itemDiv.querySelector('input'); cb.checked = true;
-                    // 初始化顯示
-                    handleCheckboxChange(cb, false);
-                    
+                    if(hasOptions) itemDiv.querySelector('.interactive-module').style.display = 'block';
+                    editDiv.style.display = 'block';
                     const ta = editDiv.querySelector('textarea');
+                    // 如果有舊輸入，優先還原
                     if(ta && editedTexts[id]) ta.value = editedTexts[id];
+                    // 如果冇舊輸入，產生預設內容
+                    else if(ta) ta.value = composeStudentFromConcise(id);
                 }
             });
             details.appendChild(content);
@@ -6551,7 +6541,26 @@ function buildChecklist() {
         }
     } else {
         checklistContainer.style.display = 'block';
-        checklistContainer.innerHTML = `<div class="rescue-card">...</div>`; // (略去 Rescue Card HTML 以節省空間)
+        checklistContainer.innerHTML = `
+            <div class="rescue-card">
+                <div class="rescue-title">尚未有評語項目</div>
+                <div class="rescue-desc">請選擇載入方式：</div>
+                <div class="rescue-grid">
+                    <div class="rescue-btn" onclick="quickLoadPresets()">
+                        <div class="rescue-icon">📚</div>
+                        <div class="rescue-label">載入預設</div>
+                    </div>
+                    <div class="rescue-btn" onclick="showPage('page6')">
+                        <div class="rescue-icon">✨</div>
+                        <div class="rescue-label">AI 生成</div>
+                    </div>
+                    <div class="rescue-btn" onclick="showPage('page3')">
+                        <div class="rescue-icon">✍️</div>
+                        <div class="rescue-label">手動新增</div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 }
 
@@ -13440,30 +13449,9 @@ async function confirmDeleteProjectDirectly(id, title) {
         alert("刪除失敗：" + error.message);
     }
 }
-// [v19.8] 儲存並跳轉 (Next/Prev 按鈕專用)
-async function saveAndNavigate(direction) {
-    // 1. 視覺反饋
-    if(typeof showToast === 'function') showToast("💾 正在儲存...", "info");
 
-    try {
-        // 2. 嘗試同步到雲端 (Silent Mode: 不彈出成功 Toast，以免阻礙體驗)
-        // 這裡會更新 allStudentRecords 記憶體，也會嘗試上傳 DB
-        await saveCurrentStudentData('cloud_silent');
-        
-        // 3. 執行跳轉
-        navigateToStudent(direction);
-        
-        // 4. 顯示新學生名字
-        const select = document.getElementById('student-select');
-        const name = select.options[select.selectedIndex].text;
-        if(typeof showToast === 'function') showToast(`已跳轉至：${name}`, "info");
 
-    } catch (e) {
-        console.error("Auto-save failed:", e);
-        // 即使雲端失敗，記憶體應該已更新 (saveCurrentStudentData 邏輯)，所以照樣跳轉
-        navigateToStudent(direction);
-    }
-}
+
 // [v19.3] 開啟專案詳情 Modal
 async function openProjectDetails(id, topic, className, created, updated, total, graded) {
     const modal = document.getElementById('pop-project-details-modal');
@@ -13519,7 +13507,6 @@ function deleteProjectFromDetails() {
     document.getElementById('pop-project-details-modal').classList.remove('active');
     confirmDeleteProjectDirectly(id, title);
 }
-
 </script> <!-- 呢個係原本全個檔案唯一的結尾，保留佢 -->
 
 <!-- [v12.2] Back To Top (確保在最外層，不受干擾) -->
