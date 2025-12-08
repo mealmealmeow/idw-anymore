@@ -9474,6 +9474,96 @@ function generateStudentWord() {
 // ====== 新增：鍵盤快捷鍵功能 (開始) ======
 // ==========================================
 
+// [v18.6] Page 1 名單選取 (強制 ID 寫入 + 除錯版)
+// 請確保這是文件中唯一的 handleClassSelectChange 函數
+window.handleClassSelectChange = async function() {
+    const select = document.getElementById('setup-class-select');
+    const container = document.getElementById('setup-student-checklist');
+    const area = document.getElementById('setup-student-area');
+
+    if (!container || !area) return;
+
+    container.innerHTML = '';
+    area.style.display = 'none';
+    
+    if (!select || !select.value) return;
+
+    // 設定全域變數
+    window.currentClassId = select.value;
+    
+    area.style.display = 'block';
+    container.innerHTML = '<div style="padding:10px; color:#666;">🔄 正在讀取並同步 ID...</div>';
+
+    try {
+        const { data: students, error } = await supabaseClient
+            .from('students')
+            .select('*')
+            .eq('class_id', select.value);
+            
+        if (error) throw error;
+
+        container.innerHTML = '';
+        if (!students || students.length === 0) { 
+            container.innerHTML = '<div style="padding:10px;">此班級暫無學生資料</div>'; 
+            return; 
+        }
+
+        // 使用統一排序
+        sortStudents(students);
+
+        let debugCount = 0;
+
+        students.forEach(s => {
+            const div = document.createElement('div');
+            div.className = 'student-check-card checked';
+            
+            // 處理顯示名稱
+            let displayNum = s.student_number;
+            if (displayNum && /^\d$/.test(displayNum)) displayNum = '0' + displayNum;
+            
+            let cleanInfo = s.name;
+            if (/^\d+$/.test(s.name)) {
+                cleanInfo = s.name;
+            } else if (displayNum) {
+                cleanInfo = `${displayNum}-${s.name}`;
+            }
+
+            // 🔥 核心修復：寫入 ID
+            // 如果 s.id 是 undefined，這裡會報錯或顯示 undefined，方便除錯
+            if (!s.id) {
+                console.error("發現異常數據 (無 ID):", s);
+                div.style.border = "2px solid red";
+                div.title = "資料庫錯誤：缺少 ID";
+            } else {
+                debugCount++;
+            }
+
+            div.dataset.info = cleanInfo;
+            div.dataset.dbId = s.id; // 這是關鍵！
+
+            div.innerHTML = `
+                <input type="checkbox" checked>
+                <span>${escapeHtml(displayNum||'')}<br>${escapeHtml(s.name||'')}</span>
+            `;
+            
+            div.onclick = (e) => {
+                // 防止點擊 Checkbox 時觸發兩次
+                if (e.target.tagName === 'INPUT') return;
+                const cb = div.querySelector('input');
+                cb.checked = !cb.checked;
+                div.classList.toggle('checked', cb.checked);
+            };
+            container.appendChild(div);
+        });
+        
+        console.log(`✅ 已成功載入 ${debugCount} 位學生 (均包含 ID)`);
+
+    } catch (err) { 
+        console.error("List Load Error:", err);
+        container.innerHTML = `<div style="color:red;">讀取錯誤: ${err.message}</div>`; 
+    }
+};
+
 // [Pro-v9.6.1] 全能快捷鍵 (包含舊有導航 + 新增輸入流)
 function initHotkeys() {
   
@@ -11368,71 +11458,6 @@ async function loadPage1ClassDropdown(forceRefresh = false) {
     }
 }
 
-// [v18.5] Page 1 名單選取 (修復 ID 遺失問題)
-async function handleClassSelectChange() {
-    const select = document.getElementById('setup-class-select');
-    const container = document.getElementById('setup-student-checklist');
-    const area = document.getElementById('setup-student-area');
-
-    container.innerHTML = '';
-    area.style.display = 'none';
-    if (!select.value) return;
-
-    // 設定全域變數
-    window.currentClassId = select.value;
-    
-    area.style.display = 'block';
-    container.innerHTML = '<div>讀取中...</div>';
-
-    try {
-        const { data: students } = await supabaseClient
-            .from('students')
-            .select('*')
-            .eq('class_id', select.value);
-            
-        container.innerHTML = '';
-        if (!students || students.length === 0) { 
-            container.innerHTML = '<div>暫無學生</div>'; 
-            return; 
-        }
-
-        // 使用統一排序
-        sortStudents(students);
-
-        students.forEach(s => {
-            const div = document.createElement('div');
-            div.className = 'student-check-card checked';
-            
-            // 處理顯示名稱
-            let displayNum = s.student_number;
-            if (displayNum && /^\d$/.test(displayNum)) displayNum = '0' + displayNum;
-            
-            let displayName = s.name;
-            let cleanInfo = s.name;
-
-            if (/^\d+$/.test(s.name)) {
-                cleanInfo = s.name;
-            } else if (displayNum) {
-                cleanInfo = `${displayNum}-${s.name}`;
-            }
-
-            // 🔥 關鍵修正：確保寫入 Database ID
-            div.dataset.info = cleanInfo;
-            div.dataset.dbId = s.id; 
-
-            div.innerHTML = `<input type="checkbox" checked><span>${escapeHtml(displayNum||'')}<br>${escapeHtml(s.name||'')}</span>`;
-            div.onclick = () => {
-                const cb = div.querySelector('input');
-                cb.checked = !cb.checked;
-                div.classList.toggle('checked', cb.checked);
-            };
-            container.appendChild(div);
-        });
-    } catch (err) { 
-        console.error(err);
-        container.innerHTML = '讀取錯誤，請重試'; 
-    }
-}
 
 // 4. 全選 / 全不選
 function toggleAllSetupStudents(checked) {
@@ -11480,38 +11505,7 @@ async function loadPage1ClassDropdown() {
     } catch (e) { console.error(e); select.innerHTML = '<option>讀取失敗</option>'; }
 }
 
-async function handleClassSelectChange() {
-    const select = document.getElementById('setup-class-select');
-    const container = document.getElementById('setup-student-checklist');
-    const area = document.getElementById('setup-student-area');
-    
-    container.innerHTML = '';
-    area.style.display = 'none';
-    if (!select.value) return;
 
-    area.style.display = 'block';
-    container.innerHTML = '<div>讀取中...</div>';
-
-    const { data: students } = await supabaseClient
-        .from('students').select('*').eq('class_id', select.value)
-        .order('student_number', { ascending: true });
-
-    container.innerHTML = '';
-    if (!students.length) { container.innerHTML = '<div>暫無學生</div>'; return; }
-
-    students.forEach(s => {
-        const div = document.createElement('div');
-        div.className = 'student-check-card checked'; 
-        div.dataset.info = `${s.student_number || ''}${s.student_number ? '-' : ''}${s.name}`;
-        div.innerHTML = `<input type="checkbox" checked><span>${escapeHtml(s.student_number)}<br>${escapeHtml(s.name)}</span>`;
-        div.onclick = () => {
-            const cb = div.querySelector('input');
-            cb.checked = !cb.checked;
-            div.classList.toggle('checked', cb.checked);
-        };
-        container.appendChild(div);
-    });
-}
 
 function toggleAllSetupStudents(checked) {
     document.querySelectorAll('#setup-student-checklist .student-check-card').forEach(card => {
