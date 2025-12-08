@@ -10536,11 +10536,11 @@ function startNewProjectForClass(classId, className) {
     }, 500);
 }
 
-// [v19.7] 載入作業 (核心修復：正確讀取全班名單 + 成績合併)
+// [v20.1] 載入作業 (嚴格模式：分母只計算作業內的學生)
 async function openAssignment(assignmentId) {
     if (!currentUser) return;
     try {
-        // 1. 讀取作業基本資料 (獲取 class_id)
+        // 1. 讀取作業基本資料
         const { data: assignment, error: assignError } = await supabaseClient
             .from('assignments')
             .select(`*, classes(class_name)`)
@@ -10548,28 +10548,17 @@ async function openAssignment(assignmentId) {
             .single();
         if (assignError) throw assignError;
 
-        const classId = assignment.class_id;
-
-        // 2. 🔥 核心修正：平行讀取「全班學生」與「該作業成績」
-        const [studentsRes, resultsRes] = await Promise.all([
-            // A. 讀取該班所有學生 (Base Roster)
-            supabaseClient
-                .from('students')
-                .select('*')
-                .eq('class_id', classId),
+        // 2. 🔥 核心修正：只讀取 results 表 (這是唯一的真理)
+        // 絕對不讀取 classes/students 表來合併，確保分母 = 建立時的人數
+        const { data: results, error: resError } = await supabaseClient
+            .from('results')
+            .select(`
+                *,
+                students (id, name, student_number) 
+            `)
+            .eq('assignment_id', assignmentId);
             
-            // B. 讀取該作業的所有成績 (Results)
-            supabaseClient
-                .from('results')
-                .select('*')
-                .eq('assignment_id', assignmentId)
-        ]);
-
-        if (studentsRes.error) throw studentsRes.error;
-        if (resultsRes.error) throw resultsRes.error;
-
-        const students = studentsRes.data; // 全班學生
-        const results = resultsRes.data;   // 已有成績
+        if (resError) throw resError;
 
         // 3. 處理評語庫還原
         const documentContainer = document.getElementById('critique-data');
@@ -10590,30 +10579,27 @@ async function openAssignment(assignmentId) {
         if(document.getElementById('topic')) document.getElementById('topic').value = assignment.title;
         if(document.getElementById('page2-topic-display')) document.getElementById('page2-topic-display').value = assignment.title;
 
-        // 5. 數據合併 (Merge)
-        // 遍歷所有學生，如果有成績就填入，冇就留空
-        allStudentRecords = students.map(st => {
-            // 尋找對應的成績紀錄
-            const res = results.find(r => r.student_id === st.id);
-            
-            // 建立 Data 物件 (有成績用成績，無成績用預設空值)
-            const extraData = res && res.comment_data ? res.comment_data : {};
-            const scores = res ? {
-                content: res.content_score, expression: res.expression_score, structure: res.structure_score,
-                punctuation: res.punctuation_score, total: res.total_score, typos: res.typo_score || 0
-            } : { content:'', expression:'', structure:'', punctuation:'', typos:'', total:'' };
+        // 5. 數據組裝 (Strict Mapping)
+        allStudentRecords = results.map(res => {
+            const st = res.students; 
+            if (!st) return null; // 資料庫關聯防爆
 
+            const extraData = res.comment_data || {};
+            
             const dataObj = {
                 class: assignment.classes ? assignment.classes.class_name : '',
                 topic: assignment.title,
                 uniqueComment: extraData.uniqueComment || '',
-                scores: scores,
+                scores: {
+                    content: res.content_score, expression: res.expression_score, structure: res.structure_score,
+                    punctuation: res.punctuation_score, total: res.total_score, typos: res.typo_score || 0
+                },
                 typos: extraData.typos || [], 
                 checkedCritiques: extraData.checkedCritiques || [],
-                fullComment: res ? (res.comment_full || '') : '', 
-                studentComment: res ? (res.comment_student || '') : '', 
-                pureStudentComment: extraData.pureStudentComment || (res ? res.comment_student : '') || '', 
-                pureFullComment: extraData.pureFullComment || (res ? res.comment_full : '') || ''
+                fullComment: res.comment_full || '', 
+                studentComment: res.comment_student || '', 
+                pureStudentComment: extraData.pureStudentComment || res.comment_student || '', 
+                pureFullComment: extraData.pureFullComment || res.comment_full || ''
             };
 
             // 純學號處理
@@ -10626,14 +10612,14 @@ async function openAssignment(assignmentId) {
                 name: st.name, 
                 originalName: originalName,
                 dbId: st.id, 
-                data: dataObj // 這裡即使是未批改學生，也有一個空的 data 物件
+                data: dataObj
             };
-        });
+        }).filter(r => r !== null);
 
         // 排序
         sortStudents(allStudentRecords);
 
-        // 填寫名單文字框 (這會觸發下拉選單更新)
+        // 填寫名單文字框
         document.getElementById('student-names').value = allStudentRecords.map(r => r.originalName).join('\n');
         
         // 強制刷新 UI
@@ -10668,9 +10654,54 @@ function updateWelcomeMessage() {
 /* === [v16.1] 智能入口 (Selective Restore) === */
 /* ========================================= */
 
-// [v20.0] 初始化與智能路由 (Smart Routing)
-document.addEventListener('DOMContentLoaded', async () => {
-    // 1. 基礎初始化
+// [v20.1] 初始化 (瞬間路由 + 非同步載入)
+document.addEventListener('DOMContentLoaded', () => { // 移除 async，確保立即執行
+    
+    // 🔥 1. 瞬間路由 (Instant Routing)
+    // 在載入任何數據前，立即決定顯示哪個頁面，杜絕閃爍
+    const lastPage = localStorage.getItem('idw_last_page');
+    const resetToHomePages = ['page1', 'page2']; // 這些頁面刷新必回首頁
+    let targetPageId = 'page-home';
+
+    if (lastPage && !resetToHomePages.includes(lastPage)) {
+        targetPageId = lastPage;
+    }
+
+    // 手動切換 Active Class (比 showPage 更快，不涉邏輯)
+    document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+    const targetEl = document.getElementById(targetPageId);
+    if(targetEl) targetEl.classList.add('active');
+
+    // 同步導航按鈕狀態
+    document.querySelectorAll('.main-nav .nav-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.sub-nav-btn').forEach(btn => btn.classList.remove('active'));
+    
+    // 簡單還原按鈕狀態 (詳細邏輯稍後由 showPage 補足)
+    if (targetPageId === 'page-home') {
+        const homeBtn = document.querySelector('.main-nav .nav-btn[data-target="home"]');
+        if(homeBtn) homeBtn.classList.add('active');
+        const subContainer = document.getElementById('sub-nav-container');
+        if(subContainer) subContainer.style.display = 'none';
+    } else {
+        const subBtn = document.getElementById('nav-' + targetPageId);
+        if(subBtn) {
+            subBtn.classList.add('active');
+            // 嘗試顯示懸浮島
+            const subContainer = document.getElementById('sub-nav-container');
+            if(subContainer) subContainer.style.display = 'flex';
+            const group = subBtn.closest('.sub-nav-group');
+            if(group) {
+                document.querySelectorAll('.sub-nav-group').forEach(g => g.style.display = 'none');
+                group.style.display = 'flex';
+                // 反向激活主導航
+                const mainTarget = group.id.replace('sub-nav-', '');
+                const mainBtn = document.querySelector(`.main-nav .nav-btn[data-target="${mainTarget}"]`);
+                if(mainBtn) mainBtn.classList.add('active');
+            }
+        }
+    }
+
+    // 2. 執行初始化函數
     loadFontSize();
     initHotkeys();
     attachGlobalListeners();
@@ -10678,26 +10709,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     initFloatingNavObserver();
     initScrollAutoShow();
 
-    // 2. 身份驗證 (優先)
-    await checkUser(); 
-
-    // 3. 預載 Dashboard (確保首頁數據準備好)
-    if(typeof loadDashboard === 'function') loadDashboard();
-    
-    // 4. 🔥 智能路由判斷
-    const lastPage = localStorage.getItem('idw_last_page');
-    
-    // 定義「必須回首頁」的頁面 (Page 1 & Page 2)
-    const resetToHomePages = ['page1', 'page2'];
-
-    if (lastPage && !resetToHomePages.includes(lastPage)) {
-        // 如果是其他頁面 (如 Page 3, 5, 6, 7, 8)，保持停留在該頁
-        showPage(lastPage, null, false);
-    } else {
-        // 如果是 Page 1, Page 2 或沒有紀錄，強制回首頁
-        showPage('page-home', null, false);
-    }
+    // 3. 非同步執行驗證與數據載入 (不阻擋 UI)
+    (async () => {
+        await checkUser(); 
+        if(typeof loadDashboard === 'function') loadDashboard();
+        
+        // 為了確保 showPage 的完整邏輯 (如 Scroll Listener) 被掛載，
+        // 我們在數據準備好後，安靜地再 Call 一次 showPage (不寫入 History)
+        showPage(targetPageId, null, false);
+    })();
 });
+
 // [Helper] 確認還原
 function confirmRestore() {
     document.getElementById('pop-restore-modal').classList.remove('active');
