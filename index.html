@@ -6087,15 +6087,15 @@ function applyCritiquesToDOM(critiques) {
 }
 
 
-// [v19.5] 全域監聽 (修復下拉選單更新 & Checkbox)
+// [v19.6] 全域監聽 (修復下拉選單即時更新)
 function attachGlobalListeners() {
-    // 登入登出按鈕
+    // 按鈕監聽
     const loginBtn = document.getElementById('login-btn'); if(loginBtn) loginBtn.addEventListener('click', handleLogin);
     const logoutBtn = document.getElementById('logout-btn'); if(logoutBtn) logoutBtn.addEventListener('click', handleLogout);
     const syncBtn = document.getElementById('sync-btn'); if(syncBtn) syncBtn.addEventListener('click', syncDataToCloud);
     const selProjBtn = document.getElementById('select-project-btn'); if(selProjBtn) selProjBtn.addEventListener('click', promptAndLoadCloudProject);
 
-    // 題目同步邏輯
+    // 題目同步
     const syncTopic = (val) => {
         ['topic', 'ai-topic', 'page2-topic-display'].forEach(id => {
             const el = document.getElementById(id);
@@ -6105,7 +6105,6 @@ function attachGlobalListeners() {
         isDataDirty = true;
         updateUIBasedOnAuthState();
     };
-
     ['topic', 'ai-topic', 'page2-topic-display'].forEach(id => {
         const el = document.getElementById(id);
         if(el) el.addEventListener('input', (e) => syncTopic(e.target.value));
@@ -6114,9 +6113,8 @@ function attachGlobalListeners() {
     // 學生下拉選單
     document.getElementById('student-select').addEventListener('change', (e) => loadStudentData(e.target.value));
 
-    // 分數輸入框專用監聽
-    const scoreInputs = ['score-content', 'score-expression', 'score-structure', 'score-punctuation', 'score-typos'];
-    scoreInputs.forEach(id => {
+    // 分數欄位
+    ['score-content', 'score-expression', 'score-structure', 'score-punctuation', 'score-typos'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             el.addEventListener('input', () => calculateTotalScore());
@@ -6124,14 +6122,50 @@ function attachGlobalListeners() {
         }
     });
 
-    // 🔥 監聽 A: Input 事件 (打字時)
+    // 🔥 核心修復：監聽所有變更
+    document.body.addEventListener('change', (e) => {
+        const page = e.target.closest('.page-content');
+        if(!page || page.id !== 'page2') return;
+
+        // A. 下拉選單變更 -> 立即更新文字框
+        if (e.target.tagName === 'SELECT' && e.target.closest('.interactive-module')) {
+            const moduleDiv = e.target.closest('.interactive-module');
+            const critiqueId = moduleDiv.id.replace('module-', '');
+            
+            // 1. 處理「其他」選項的顯示
+            toggleOtherBlock(e.target.id, e.target.value);
+            
+            // 2. 更新該評語的文字框 (Textarea)
+            populateEditableTextarea(critiqueId);
+            
+            // 3. 更新總評語 (Output)
+            updateAllOutputs();
+            isDataDirty = true;
+            updateUIBasedOnAuthState();
+        }
+
+        // B. Checkbox 變更
+        if (e.target.matches('input[type="checkbox"]')) {
+            handleCheckboxChange(e.target, true);
+        }
+    });
+
+    // 監聽打字 (Input)
     document.body.addEventListener('input', (e) => {
         const page = e.target.closest('.page-content');
         if(!page) return;
-        if (e.target.id && e.target.id.startsWith('score-')) return;
+        if (e.target.id && e.target.id.startsWith('score-')) return; // 分數已處理
+
+        // 如果係「其他」輸入框打字，都要更新 Textarea
+        if (page.id === 'page2' && e.target.matches('.other-input input')) {
+             const moduleDiv = e.target.closest('.interactive-module');
+             if(moduleDiv) {
+                 const critiqueId = moduleDiv.id.replace('module-', '');
+                 populateEditableTextarea(critiqueId);
+             }
+        }
 
         triggerAutoSave();
-        
         if (page.id === 'page2') {
             updateAllOutputs();
             isDataDirty = true;
@@ -6139,26 +6173,7 @@ function attachGlobalListeners() {
         }
     });
 
-    // 🔥 監聽 B: Change 事件 (下拉選單 / Checkbox 改變時)
-    // 這是修復下拉選單沒反應的關鍵
-    document.body.addEventListener('change', (e) => {
-        const page = e.target.closest('.page-content');
-        if(!page) return;
-
-        // 處理 Checkbox 展開/收合
-        if (page.id === 'page2' && e.target.matches('input[type="checkbox"]')) {
-            handleCheckboxChange(e.target, true); 
-        }
-
-        // 處理 Select 下拉選單更新
-        if (page.id === 'page2' && e.target.tagName === 'SELECT') {
-            updateAllOutputs();
-            isDataDirty = true;
-            updateUIBasedOnAuthState();
-        }
-    });
-
-    // 其他檔案輸入監聽
+    // 檔案匯入
     document.getElementById('import-student-list').addEventListener('change', handleStudentListImport);
     document.getElementById('import-progress-excel').addEventListener('change', handleProgressImportExcel);
     document.getElementById('import-critique-excel').addEventListener('change', handleCritiqueImportExcel);
@@ -6166,7 +6181,6 @@ function attachGlobalListeners() {
     bindOverviewEvents();
     initSwipeGestures();
 }
-
 /* ===== [v10.3] 雙層導航邏輯 ===== */
 
 /* ========================================= */
@@ -13370,7 +13384,7 @@ function formatReportComment(text) {
     }).join('<br>');
 }
 
-// [v19.5] 渲染詳細版卡片 (修復 Gear 按鈕參數傳遞)
+// [v19.6] 渲染詳細版卡片 (修復按鈕功能與顯示)
 function renderNewDetailCards(items, container) {
     if (items.length === 0) {
         container.style.display = 'block'; 
@@ -13399,22 +13413,23 @@ function renderNewDetailCards(items, container) {
             ? updateDateObj.toLocaleTimeString('zh-HK', {hour:'2-digit', minute:'2-digit'}) 
             : updateDateObj.toLocaleDateString('zh-HK', {month:'2-digit', day:'2-digit'});
 
-        const loadAction = `openAssignment('${item.id}')`;
+        // 安全處理字串，防止單引號導致崩潰
+        const safeTopic = (item.topic || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const safeClass = (item.class_name || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const safeYear = (item.academic_year || '').replace(/'/g, "\\'");
+        const safeCreate = item.created_at;
+        const safeUpdate = item.last_updated;
 
-        // 準備詳情資料
-        const safeTopic = escapeHtmlAttr(item.topic);
-        const safeClass = escapeHtmlAttr(item.class_name);
-        const safeYear = escapeHtmlAttr(item.academic_year || '');
-        const safeCreate = escapeHtmlAttr(item.created_at);
-        const safeUpdate = escapeHtmlAttr(item.last_updated);
-        
-        // 🔥 關鍵修正：拆開參數傳送，防止 JSON.stringify 導致 HTML 結構崩壞
+        // 🔥 綁定按鈕動作 (分開清楚)
+        // ⚙️ 編輯: 修改標題
         const editAction = `event.stopPropagation(); openEditModal('${item.id}', '${item.source_type}', '${safeTopic}', '${safeClass}', '${safeYear}')`;
+        // 🗒 詳情: 查看名單
         const detailsAction = `event.stopPropagation(); openProjectDetails('${item.id}', '${safeTopic}', '${safeClass}', '${safeCreate}', '${safeUpdate}', ${item.total_students}, ${item.graded_count})`;
         
         let jumpHtml = '';
         if (item.last_student) {
-            const jumpAction = `event.stopPropagation(); localStorage.setItem('idw_jump_target', '${item.last_student}'); openAssignment('${item.id}');`;
+            const safeStudent = item.last_student.replace(/'/g, "\\'");
+            const jumpAction = `event.stopPropagation(); localStorage.setItem('idw_jump_target', '${safeStudent}'); openAssignment('${item.id}');`;
             jumpHtml = `
                 <div onclick="${jumpAction}" class="recent-proj-pill" 
                      style="margin-top:15px; padding:6px 12px; background:#f7f9f8; color:#5A8F7B; border:1px solid #e8f0eb; border-radius:99px; font-size:0.85rem; display:flex; justify-content:space-between; align-items:center; cursor:pointer; transition:all 0.2s;">
@@ -13431,7 +13446,7 @@ function renderNewDetailCards(items, container) {
         }
 
         html += `
-        <div class="cozy-folder" onclick="${loadAction}" 
+        <div class="cozy-folder" onclick="openAssignment('${item.id}')" 
              style="cursor:pointer; padding:24px; min-height:auto; background:#fff; border:1px solid rgba(0,0,0,0.04); box-shadow: 0 4px 24px rgba(0,0,0,0.03); transition: transform 0.2s, box-shadow 0.2s; border-radius:20px; position: relative;">
             
             <!-- ⚙️ 編輯按鈕 (左上) -->
@@ -13512,52 +13527,69 @@ async function confirmDeleteProjectDirectly(id, title) {
 
 
 
-// [v19.3] 開啟專案詳情 Modal
+// [v19.6] 專案詳情與名單預覽
 async function openProjectDetails(id, topic, className, created, updated, total, graded) {
     const modal = document.getElementById('pop-project-details-modal');
     
-    // 填入資料
+    // 填入基本資料
     document.getElementById('detail-topic').textContent = topic;
     document.getElementById('detail-class').textContent = className;
-    document.getElementById('detail-create-date').textContent = new Date(created).toLocaleString('zh-HK');
-    document.getElementById('detail-update-date').textContent = new Date(updated).toLocaleString('zh-HK');
-    document.getElementById('detail-count').textContent = `${graded} / ${total}`;
+    
+    const cDate = new Date(created);
+    const uDate = new Date(updated);
+    document.getElementById('detail-create-date').textContent = `${cDate.toLocaleDateString()} ${cDate.toLocaleTimeString()}`;
+    document.getElementById('detail-update-date').textContent = `${uDate.toLocaleDateString()} ${uDate.toLocaleTimeString()}`;
+    document.getElementById('detail-count').textContent = `${graded} / ${total} (完成度 ${total>0 ? Math.round(graded/total*100):0}%)`;
     
     document.getElementById('detail-project-id').value = id;
     document.getElementById('detail-project-title').value = topic;
 
-    // 讀取名單
+    // 清空並顯示 Loading
     const listDiv = document.getElementById('detail-student-list');
-    listDiv.innerHTML = '<div style="color:#999;">🔄 正在讀取名單...</div>';
+    listDiv.innerHTML = '<div style="color:#999; padding:20px; text-align:center;">🔄 正在讀取學生名單...</div>';
+    
     modal.classList.add('active');
 
+    // 讀取已批改名單 (從 Results 抓)
     try {
         const { data: results, error } = await supabaseClient
             .from('results')
-            .select('students(name, student_number)')
-            .eq('assignment_id', id);
+            .select('updated_at, students(name, student_number)')
+            .eq('assignment_id', id)
+            .order('updated_at', { ascending: false }); // 最近批改在上
 
         if (error) throw error;
 
         if (!results || results.length === 0) {
-            listDiv.innerHTML = '無資料';
+            listDiv.innerHTML = '<div style="padding:20px; text-align:center; color:#ccc;">尚未有批改記錄</div>';
         } else {
-            const names = results.map(r => {
+            let html = '<div style="display:flex; flex-direction:column; gap:5px; padding:10px;">';
+            results.forEach(r => {
                 const s = r.students;
-                if (!s) return '未知';
-                let num = s.student_number;
-                if (num && /^\d$/.test(num)) num = '0' + num;
-                return num ? `${num} ${s.name}` : s.name;
-            }).sort();
+                if (!s) return;
+                
+                let sName = s.name;
+                let sNum = s.student_number;
+                if (sNum && /^\d$/.test(sNum)) sNum = '0' + sNum;
+                const displayName = sNum ? `${sNum} ${sName}` : sName;
+                
+                // 格式化時間 (只顯示月/日)
+                const d = new Date(r.updated_at);
+                const timeStr = `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${d.getMinutes()<10?'0'+d.getMinutes():d.getMinutes()}`;
 
-            listDiv.innerHTML = `
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-                    ${names.map(n => `<div>• ${escapeHtml(n)}</div>`).join('')}
-                </div>
-            `;
+                html += `
+                    <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #eee; padding:4px 0;">
+                        <span style="color:#333;">${escapeHtml(displayName)}</span>
+                        <span style="color:#999; font-size:0.8rem;">${timeStr}</span>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            listDiv.innerHTML = html;
         }
     } catch (e) {
-        listDiv.innerHTML = `<span style="color:red;">讀取失敗</span>`;
+        console.error(e);
+        listDiv.innerHTML = `<span style="color:red; padding:10px;">讀取失敗: ${e.message}</span>`;
     }
 }
 
