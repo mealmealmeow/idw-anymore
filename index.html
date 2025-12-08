@@ -3367,27 +3367,42 @@ header h1 {
 }
 
 /* ========================================= */
-/* === [Edition: 書 v13.1] Frosted UI (v20.2 Restore) === */
+/* === [Edition: 書 v13.1] Frosted UI === */
 /* ========================================= */
 
-/* 1. 全局設定：預設隱藏懸浮按鈕與遮罩 (Desktop) */
 #mobile-book-trigger, #mobile-book-overlay { display: none; }
+/* 1. 書籤按鈕：移至 Header (隱藏原本底部的) */
+#mobile-book-trigger { display: none !important; }
 
-/* 2. 隱藏 Header 內的書籤按鈕 (我們改用回右下角懸浮版) */
-.header-book-btn { display: none !important; }
-
-/* 3. 手機版：顯示右下角懸浮書籤 */
-@media (max-width: 768px) {
-    /* 這裡只需設定 display: flex，具體樣式由下方的 Glassmorphism 設定負責 */
-    #mobile-book-trigger { display: flex; } 
-    
-    /* 讓 Header 右邊保持空間，但不顯示按鈕 */
-    .header-right { gap: 0; }
+/* 2. 手機版書籤掣 (實色高對比版) */
+.header-book-btn {
+    display: none;
+    /* 🔥 改用實心奶白色，對比 Header 的綠色 */
+    background: #fdfbf7; 
+    color: var(--accent-color); /* 圖案用深綠色 */
+    border: 2px solid rgba(255,255,255,0.5); /* 加個光暈邊框 */
+    width: 40px;
+    height: 40px;
+    border-radius: 12px; /* 圓角方塊，似 App Icon */
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    margin-right: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15); /* 浮起感 */
+    transition: transform 0.1s;
 }
 
-/* 4. 按下效果 (保留給之後的懸浮按鈕用) */
-#mobile-book-trigger:active {
+@media (max-width: 768px) {
+    .header-book-btn { display: flex; }
+    
+    /* 讓 Header 右邊寬鬆啲 */
+    .header-right { gap: 8px; }
+}
+
+.header-book-btn:active {
     transform: scale(0.92);
+    background: #fff;
 }
 
 @media (max-width: 768px) {
@@ -13607,6 +13622,7 @@ function deleteProjectFromDetails() {
 }
 </script> <!-- 呢個係原本全個檔案唯一的結尾，保留佢 -->
 
-
+<!-- [v12.2] Back To Top (確保在最外層，不受干擾) -->
+<button id="back-to-top-btn" onclick="scrollToTop()" title="回到頂部" style="display: none;">⬆</button>
 </body>
 </html>
