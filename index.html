@@ -5008,8 +5008,8 @@ header h1 {
 <!-- [v18.3] 開新批改確認 Modal -->
 <div id="pop-setup-confirm-modal" class="pop-overlay">
     <div class="pop-modal">
-        <div class="pop-icon">🚀</div>
-        <h3>確認作業資訊</h3>
+        <div class="pop-icon">☕️</div>
+        <h3>預備好了嗎？</h3>
         <p class="pop-desc">請核對以下資訊，確定後將立即建立雲端專案。</p>
         
         <div style="background:#f9f9f9; padding:15px; border-radius:12px; text-align:left; margin-bottom:20px; border:1px solid #eee;">
@@ -5030,14 +5030,30 @@ header h1 {
         <!-- JS 會填入名單 -->
     </div>
 </div>
-            </div>
-        </div>
-
-
+        
+<!-- [v18.9] 未同步提醒 Modal -->
+<div id="pop-unsaved-guard-modal" class="pop-overlay">
+    <div class="pop-modal">
+        <div class="pop-icon">🍃</div>
+        <h3>還未同步喔</h3>
+        <p class="pop-desc">
+            您在批改頁的更動尚未同步至雲端。<br>
+            直接離開可能會遺失剛才的進度。
+        </p>
         <div class="pop-footer">
-            <button class="pop-btn pop-btn-cancel" onclick="document.getElementById('pop-setup-confirm-modal').classList.remove('active')">返回修改</button>
-            <button class="pop-btn pop-btn-confirm" id="btn-create-project-confirm">確定建立</button>
+            <!-- 暫存目標頁面 ID -->
+            <input type="hidden" id="guard-target-page">
+            
+            <button class="pop-btn pop-btn-cancel" onclick="forceLeavePage()">👋 直接離開</button>
+            <button class="pop-btn pop-btn-confirm" onclick="stayAndSync()">☁️ 留低同步</button>
         </div>
+    </div>
+</div>
+
+ <div class="pop-footer">
+   <button class="pop-btn pop-btn-cancel" onclick="document.getElementById('pop-setup-confirm-modal').classList.remove('active')">返回修改</button>
+   <button class="pop-btn pop-btn-confirm" id="btn-create-project-confirm">確定建立</button>
+ </div>
     </div>
 </div>
 
@@ -6110,11 +6126,23 @@ function switchMainTab(target) {
 // showPage 保持 v10.6 版本即可，它已經兼容這種父子結構
 // 唯一要刪除的是 toggleMobileMenu 函數，因為按鈕已經沒了
 
-// [v18.8] Show Page (支援 Browser Back Button)
-function showPage(pageId, focusElementId = null, pushToHistory = true) {
-    // Route Guard (守衛機制)
+// [v18.9] Show Page (含未同步攔截)
+function showPage(pageId, focusElementId = null, pushToHistory = true, forceBypass = false) {
+    
+    // 🔥 攔截邏輯：如果正在 Page 2，且有未儲存變更，且不是強制跳轉
+    const currentPage = document.querySelector('.page-content.active');
+    if (!forceBypass && currentPage && currentPage.id === 'page2' && pageId !== 'page2') {
+        if (typeof isDataDirty !== 'undefined' && isDataDirty) {
+            // 彈出溫柔提醒
+            document.getElementById('guard-target-page').value = pageId; // 記住想去邊
+            document.getElementById('pop-unsaved-guard-modal').classList.add('active');
+            return; // 中止跳轉
+        }
+    }
+
+    // Route Guard (權限守衛)
     if (pageId === 'page2') {
-        const hasProject = window.currentAssignmentId || (allStudentRecords && allStudentRecords.length > 0);
+        const hasProject = window.currentAssignmentId || (typeof allStudentRecords !== 'undefined' && allStudentRecords.length > 0);
         if (!hasProject) {
             if(typeof showToast === 'function') showToast("⚠️ 請先在首頁選擇或建立作業", "warning");
             pageId = 'page-home'; 
@@ -6161,15 +6189,32 @@ function showPage(pageId, focusElementId = null, pushToHistory = true) {
     
     localStorage.setItem('idw_last_page', pageId);
 
-    // 🔥 [v18.8] 處理瀏覽器歷史紀錄
     if (pushToHistory) {
-        // 如果是同頁面切換，使用 replaceState，否則 pushState
         const state = { pageId: pageId };
-        // 簡單判斷：如果當前 URL hash 不是這個 page，就 push
         if (window.location.hash !== '#' + pageId) {
             history.pushState(state, '', '#' + pageId);
         }
     }
+}
+
+// [v18.9] 攔截器按鈕功能
+function stayAndSync() {
+    // 關閉 Modal
+    document.getElementById('pop-unsaved-guard-modal').classList.remove('active');
+    // 執行同步
+    saveCurrentStudentData('cloud');
+}
+
+function forceLeavePage() {
+    const target = document.getElementById('guard-target-page').value;
+    document.getElementById('pop-unsaved-guard-modal').classList.remove('active');
+    
+    // 重置髒狀態 (因為用戶選擇放棄更改)
+    isDataDirty = false;
+    updateUIBasedOnAuthState();
+    
+    // 強制跳轉 (forceBypass = true)
+    showPage(target, null, true, true);
 }
 
 // 4. 🔥 補回缺失的 buildCardHtml 函數 (修復紅字錯誤)
@@ -10404,6 +10449,7 @@ function updateWelcomeMessage() {
 /* === [v16.1] 智能入口 (Selective Restore) === */
 /* ========================================= */
 
+// [v18.9] 初始化 (移除自動還原提示)
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. 基礎初始化
     loadFontSize();
@@ -10416,44 +10462,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 2. 身份驗證 (優先)
     await checkUser(); 
 
-    // 3. 路由判斷
-    const lastPage = localStorage.getItem('idw_last_page');
-    const backupStr = localStorage.getItem('idw_grading_backup_v1');
-    
-    // 定義「重要頁面」 (只有這兩頁會觸發還原詢問)
-    const criticalPages = ['page2', 'page3'];
-    
-    // 檢查：是否在重要頁面 + 有無記憶體數據
-    // (如果剛刷新，記憶體 allStudentRecords 會是空的)
-    const hasMemoryData = (typeof allStudentRecords !== 'undefined' && allStudentRecords.length > 0);
-
-    if (criticalPages.includes(lastPage) && !hasMemoryData) {
-        
-        // 檢查有無 LocalStorage 備份
-        if (backupStr) {
-            try {
-                const b = JSON.parse(backupStr);
-                // 檢查備份是否太舊 (24小時內有效)
-                if (Date.now() - b.timestamp < 24 * 60 * 60 * 1000) {
-                    const d = new Date(b.timestamp);
-                    const timeStr = `${d.getHours()}:${d.getMinutes() < 10 ? '0'+d.getMinutes() : d.getMinutes()}`;
-                    
-                    document.getElementById('restore-msg-time').innerHTML = 
-                        `系統檢測到您在 <b>${timeStr}</b> 有未完成的資料。<br>是否還原並回到該頁面？`;
-                    
-                    document.getElementById('pop-restore-modal').classList.add('active');
-                    return; // 停在這裡等用戶揀
-                }
-            } catch(e) {}
-        }
-    }
-
-    // 其他所有情況 (Page 4, 5, 6, 7, 8, Home, Setting...) -> 一律回首頁
-    // 或者雖然係 Page 2/3 但無備份 -> 也是回首頁
-    showPage('page-home');
-    
-    // 確保 Dashboard 載入
+    // 3. 確保 Dashboard 載入
+    // 無論去邊頁，都預載一次 Dashboard 數據先
     if(typeof loadDashboard === 'function') loadDashboard();
+    
+    // 4. 路由處理：如果是 F5 刷新，停留在當前頁；如果是新開，去首頁
+    const lastPage = localStorage.getItem('idw_last_page');
+    if (lastPage) {
+        // 使用 false 參數，不寫入歷史紀錄，避免 F5 產生多條紀錄
+        showPage(lastPage, null, false);
+    } else {
+        showPage('page-home', null, false);
+    }
 });
 
 // [Helper] 確認還原
