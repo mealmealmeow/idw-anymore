@@ -3943,6 +3943,39 @@ display: flex !important; /* 🔥 這裡加上 !important 確保它會彈出來 
 #pop-manage-students-modal { z-index: 2147483640 !important; }
 /* 確保通用彈窗的底色更深一點，區分層次 */
 #pop-generic-modal .pop-modal { box-shadow: 0 25px 80px rgba(0,0,0,0.5); }
+
+/* 🔥 強制修復手機版書籤功能 (貼在 CSS 最底) */
+
+/* 1. 確保按鈕可見且可點擊 */
+@media (max-width: 768px) {
+    #mobile-book-trigger {
+        display: flex !important;
+        visibility: visible !important; 
+        opacity: 1 !important;
+        z-index: 2147483647 !important; /* 確保在最上層 */
+        pointer-events: auto !important; /* 確保收得到 Click */
+        cursor: pointer !important;
+    }
+
+    /* 2. 確保目錄選單 (Overlay) 存在於頁面上 (但預設透明) */
+    #mobile-book-overlay {
+        display: flex !important; /* 關鍵：不能是 none，否則 JS 加 active 都沒用 */
+        visibility: visible;      /* 讓它存在 */
+        opacity: 0;               /* 但預設透明 */
+        pointer-events: none;     /* 預設穿透 */
+        z-index: 2147483646 !important; /* 在按鈕下面一層 */
+        
+        /* 確保位置正確 */
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+    }
+
+    /* 3. 當 JS 加上 .active 時，顯示出來 */
+    #mobile-book-overlay.active {
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+}
 </style>
 
 </head>
@@ -13626,4 +13659,3 @@ function deleteProjectFromDetails() {
 <button id="back-to-top-btn" onclick="scrollToTop()" title="回到頂部" style="display: none;">⬆</button>
 </body>
 </html>
-      
