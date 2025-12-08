@@ -2480,11 +2480,31 @@ scroll-margin-top: 160px;
   background: #fff;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
-  padding: 0.5rem;
-  text-align: center;
-  font-size: 0.9rem;
+  padding: 0.8rem 0.5rem; /* 上下加闊，左右縮窄 */
+  text-align: center;     /* 文字置中 */
+  font-size: 0.95rem;
   cursor: pointer;
   user-select: none;
+  
+  /* Flexbox 置中核心 */
+  display: flex;
+  flex-direction: column; /* 垂直排列 (Checkbox 在上，字在下) */
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 80px; /* 確保卡片有一致高度 */
+}
+
+/* 隱藏 Checkbox (用卡片顏色顯示狀態) */
+.student-check-card input { display: none; }
+
+/* 選中狀態 */
+.student-check-card.checked {
+  background-color: #eef7f4;
+  border-color: var(--accent-color);
+  color: var(--title-color);
+  font-weight: bold;
+  box-shadow: 0 0 0 1px var(--accent-color); /* 加強邊框 */
 }
 
 .student-check-card.checked {
@@ -5004,18 +5024,15 @@ header h1 {
             <div>
                 <span style="color:#888; font-size:0.85rem;">作答人數：</span><br>
                 <strong id="confirm-count-display" style="font-size:1.1rem; color:#c86a5a;"></strong> 
-                <span style="font-size:0.85rem; color:#999;">(已選學生)</span>
-            </div>
-        </div>
-
-        <!-- ✅ 請在這裡加入此段代碼：顯示學生名單 -->
-<div style="margin-top:12px; border-top:1px dashed #ddd; padding-top:10px;">
+         <div style="margin-top:12px; border-top:1px dashed #ddd; padding-top:10px;">
     <span style="color:#888; font-size:0.85rem;">已選名單預覽：</span>
     <div id="confirm-student-list" style="font-size:0.9rem; color:#555; max-height:100px; overflow-y:auto; margin-top:5px; line-height:1.5;">
         <!-- JS 會填入名單 -->
     </div>
 </div>
-<!-- ✅ 加入結束 -->
+            </div>
+        </div>
+
 
         <div class="pop-footer">
             <button class="pop-btn pop-btn-cancel" onclick="document.getElementById('pop-setup-confirm-modal').classList.remove('active')">返回修改</button>
@@ -6093,15 +6110,13 @@ function switchMainTab(target) {
 // showPage 保持 v10.6 版本即可，它已經兼容這種父子結構
 // 唯一要刪除的是 toggleMobileMenu 函數，因為按鈕已經沒了
 
-// [v18.1.0] Show Page with Route Guard
-function showPage(pageId, focusElementId = null) {
-    // 🔥 Route Guard (守衛機制)
+// [v18.8] Show Page (支援 Browser Back Button)
+function showPage(pageId, focusElementId = null, pushToHistory = true) {
+    // Route Guard (守衛機制)
     if (pageId === 'page2') {
         const hasProject = window.currentAssignmentId || (allStudentRecords && allStudentRecords.length > 0);
         if (!hasProject) {
-            // 溫柔踢人
             if(typeof showToast === 'function') showToast("⚠️ 請先在首頁選擇或建立作業", "warning");
-            // 強制轉回首頁
             pageId = 'page-home'; 
         }
     }
@@ -6125,7 +6140,6 @@ function showPage(pageId, focusElementId = null) {
         const homeBtn = document.querySelector('.main-nav .nav-btn[data-target="home"]');
         if(homeBtn) homeBtn.classList.add('active');
         document.getElementById('sub-nav-container').style.display = 'none';
-        
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -6144,7 +6158,18 @@ function showPage(pageId, focusElementId = null) {
             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 150);
     }
+    
     localStorage.setItem('idw_last_page', pageId);
+
+    // 🔥 [v18.8] 處理瀏覽器歷史紀錄
+    if (pushToHistory) {
+        // 如果是同頁面切換，使用 replaceState，否則 pushState
+        const state = { pageId: pageId };
+        // 簡單判斷：如果當前 URL hash 不是這個 page，就 push
+        if (window.location.hash !== '#' + pageId) {
+            history.pushState(state, '', '#' + pageId);
+        }
+    }
 }
 
 // 4. 🔥 補回缺失的 buildCardHtml 函數 (修復紅字錯誤)
@@ -8557,17 +8582,6 @@ function exportOverviewToWord() {
   background: #fff;
 }
 
-.student-check-card {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 0.9rem;
-}
 
 .student-check-card:hover {
   background-color: #f7f3eb;
@@ -9564,6 +9578,17 @@ window.handleClassSelectChange = async function() {
     }
 };
 
+// [v18.8] 瀏覽器上一頁監聽
+window.addEventListener('popstate', (event) => {
+    if (event.state && event.state.pageId) {
+        // 傳入 false 代表「不要再 Push History」，防止無限迴圈
+        showPage(event.state.pageId, null, false);
+    } else {
+        // 如果沒有 state (例如回到最初)，預設回首頁
+        showPage('page-home', null, false);
+    }
+});
+
 // [Pro-v9.6.1] 全能快捷鍵 (包含舊有導航 + 新增輸入流)
 function initHotkeys() {
   
@@ -10252,18 +10277,31 @@ function startNewProjectForClass(classId, className) {
     }, 500);
 }
 
-/* [v17.2] 載入作業 (數據結構修復) */
+// [v18.8] 載入作業 (精準載入版：只讀取有記錄的學生)
 async function openAssignment(assignmentId) {
     if (!currentUser) return;
     try {
+        // 1. 讀取作業基本資料
         const { data: assignment, error: assignError } = await supabaseClient
-            .from('assignments').select(`*, classes(class_name)`).eq('id', assignmentId).single();
+            .from('assignments')
+            .select(`*, classes(class_name)`)
+            .eq('id', assignmentId)
+            .single();
         if (assignError) throw assignError;
 
-        const { data: students } = await supabaseClient.from('students').select('*').eq('class_id', assignment.class_id).order('student_number', { ascending: true });
-        const { data: results } = await supabaseClient.from('results').select('*').eq('assignment_id', assignmentId);
+        // 2. 🔥 核心修正：只讀取該作業的 Results，並透過關聯讀取 Students
+        // 這樣就能過濾掉那些「同班但未被分配此作業」的學生
+        const { data: results, error: resError } = await supabaseClient
+            .from('results')
+            .select(`
+                *,
+                students (*) 
+            `)
+            .eq('assignment_id', assignmentId);
+            
+        if (resError) throw resError;
 
-        // 還原評語庫
+        // 3. 處理評語庫還原
         const documentContainer = document.getElementById('critique-data');
         documentContainer.innerHTML = '';
         if (assignment.settings && assignment.settings.critiques && assignment.settings.critiques.length > 0) {
@@ -10274,37 +10312,37 @@ async function openAssignment(assignmentId) {
         buildChecklist();
         buildOverviewPage();
 
-        // UI 設定
+        // 4. UI 設定
         window.currentAssignmentId = assignment.id;
         window.currentClassId = assignment.class_id;
         if(document.getElementById('student-class')) document.getElementById('student-class').value = assignment.classes.class_name;
         if(document.getElementById('topic')) document.getElementById('topic').value = assignment.title;
-        // 同步 Page 2 題目
         if(document.getElementById('page2-topic-display')) document.getElementById('page2-topic-display').value = assignment.title;
 
-        // 🔥 數據組裝 (關鍵修正)
-        allStudentRecords = students.map(st => {
-            const res = results.find(r => r.student_id === st.id);
-            let dataObj = null;
-            if (res) {
-                const extraData = res.comment_data || {};
-                dataObj = {
-                    class: assignment.classes.class_name,
-                    topic: assignment.title,
-                    uniqueComment: extraData.uniqueComment || '',
-                    scores: {
-                        content: res.content_score, expression: res.expression_score, structure: res.structure_score,
-                        punctuation: res.punctuation_score, total: res.total_score, typos: res.typo_score || 0
-                    },
-                    typos: extraData.typos || [], 
-                    checkedCritiques: extraData.checkedCritiques || [],
-                    fullComment: res.comment_full || '', 
-                    studentComment: res.comment_student || '', // 確保讀取 DB 的欄位
-                    // 🔥 確保 pureStudentComment 存在
-                    pureStudentComment: extraData.pureStudentComment || res.comment_student || '', 
-                    pureFullComment: extraData.pureFullComment || res.comment_full || ''
-                };
-            }
+        // 5. 數據組裝
+        // results 陣列現在包含了學生成績 + 學生基本資料 (res.students)
+        allStudentRecords = results.map(res => {
+            const st = res.students; // 這是從關聯表抓出來的
+            
+            if (!st) return null; // 防爆
+
+            const extraData = res.comment_data || {};
+            const dataObj = {
+                class: assignment.classes.class_name,
+                topic: assignment.title,
+                uniqueComment: extraData.uniqueComment || '',
+                scores: {
+                    content: res.content_score, expression: res.expression_score, structure: res.structure_score,
+                    punctuation: res.punctuation_score, total: res.total_score, typos: res.typo_score || 0
+                },
+                typos: extraData.typos || [], 
+                checkedCritiques: extraData.checkedCritiques || [],
+                fullComment: res.comment_full || '', 
+                studentComment: res.comment_student || '', 
+                pureStudentComment: extraData.pureStudentComment || res.comment_student || '', 
+                pureFullComment: extraData.pureFullComment || res.comment_full || ''
+            };
+
             // 純學號處理
             let displayNum = st.student_number;
             if (displayNum && /^\d$/.test(displayNum)) displayNum = '0' + displayNum;
@@ -10317,33 +10355,35 @@ async function openAssignment(assignmentId) {
                 dbId: st.id, 
                 data: dataObj
             };
-        });
+        }).filter(r => r !== null); // 過濾掉空值
+
+        // 排序
+        sortStudents(allStudentRecords);
 
         document.getElementById('student-names').value = allStudentRecords.map(r => r.originalName).join('\n');
         updateStudentDropdown(); 
         renderStudentOverviewTable(); 
         updateHeaderInfo();
 
-           showPage('page2');
+        showPage('page2');
         if(typeof showToast === 'function') showToast(`已載入：${assignment.title}`, "success");
         
-        // 🔥 [v17.3] 自動跳轉至最後編輯的學生
+        // 自動跳轉
         const jumpTarget = localStorage.getItem('idw_jump_target');
         if (jumpTarget) {
-            localStorage.removeItem('idw_jump_target'); // 用完即棄
-            // 搜尋名字匹配的學生
+            localStorage.removeItem('idw_jump_target'); 
             const targetRec = allStudentRecords.find(r => r.name === jumpTarget || r.originalName.includes(jumpTarget));
             if (targetRec) {
                 const select = document.getElementById('student-select');
                 select.value = targetRec.originalName;
-                loadStudentData(targetRec.originalName); // 觸發載入
-                console.log("已跳轉至:", jumpTarget);
+                loadStudentData(targetRec.originalName); 
             }
         }
         
-        loadSiblingProjects(assignment.class_id, assignment.id);
+        // 移除 loadSiblingProjects 呼叫，因為功能已刪除
 
     } catch (error) {
+        console.error(error);
         alert(`載入失敗：${error.message}`);
     }
 }
