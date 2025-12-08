@@ -10668,7 +10668,7 @@ function updateWelcomeMessage() {
 /* === [v16.1] 智能入口 (Selective Restore) === */
 /* ========================================= */
 
-// [v18.9] 初始化 (移除自動還原提示)
+// [v20.0] 初始化與智能路由 (Smart Routing)
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. 基礎初始化
     loadFontSize();
@@ -10681,20 +10681,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 2. 身份驗證 (優先)
     await checkUser(); 
 
-    // 3. 確保 Dashboard 載入
-    // 無論去邊頁，都預載一次 Dashboard 數據先
+    // 3. 預載 Dashboard (確保首頁數據準備好)
     if(typeof loadDashboard === 'function') loadDashboard();
     
-    // 4. 路由處理：如果是 F5 刷新，停留在當前頁；如果是新開，去首頁
+    // 4. 🔥 智能路由判斷
     const lastPage = localStorage.getItem('idw_last_page');
-    if (lastPage) {
-        // 使用 false 參數，不寫入歷史紀錄，避免 F5 產生多條紀錄
+    
+    // 定義「必須回首頁」的頁面 (Page 1 & Page 2)
+    const resetToHomePages = ['page1', 'page2'];
+
+    if (lastPage && !resetToHomePages.includes(lastPage)) {
+        // 如果是其他頁面 (如 Page 3, 5, 6, 7, 8)，保持停留在該頁
         showPage(lastPage, null, false);
     } else {
+        // 如果是 Page 1, Page 2 或沒有紀錄，強制回首頁
         showPage('page-home', null, false);
     }
 });
-
 // [Helper] 確認還原
 function confirmRestore() {
     document.getElementById('pop-restore-modal').classList.remove('active');
